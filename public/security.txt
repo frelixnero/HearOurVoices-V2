@@ -1,0 +1,5 @@
+# Vulnerability disclosure (spec §32). Move to /.well-known/security.txt in prod.
+Contact: mailto:security@hearourvoices.org
+Preferred-Languages: en
+Policy: https://www.hearourvoices.org/security-policy
+Expires: 2027-01-01T00:00:00.000Z

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /community
+
+Sitemap: https://www.hearourvoices.org/sitemap.xml

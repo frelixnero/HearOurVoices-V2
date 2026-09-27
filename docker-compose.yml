@@ -1,0 +1,27 @@
+# Local development database (spec §31 "Environment Separation": dev only).
+# Never put real sensitive evidence in this dev database (spec §31).
+#
+#   docker compose up -d
+#   # then in .env:  DATABASE_URL="postgresql://hov:hov@localhost:5432/hearourvoices?schema=public"
+#   npm run db:migrate && npm run db:seed
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: hov-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hov
+      POSTGRES_PASSWORD: hov
+      POSTGRES_DB: hearourvoices
+    ports:
+      - '5432:5432'
+    volumes:
+      - hov_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hov -d hearourvoices']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  hov_pgdata:

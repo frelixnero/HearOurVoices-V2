@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Validate Prisma schema
+        run: npx prisma validate
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          # Build must not require a live DB; a dummy URL satisfies Prisma's
+          # client init without any connection being made at build time.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
+          SESSION_SECRET: ci-placeholder-secret-not-used-at-build
+          IP_HASH_PEPPER: ci-placeholder-pepper

@@ -1,0 +1,14 @@
+{
+  "name": "HearOURVOICES",
+  "short_name": "HearOURVOICES",
+  "description": "Understand your government. See the proof. Records, evidence, timelines, scorecards, and lawful action.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f4ef",
+  "theme_color": "#102f3b",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "categories": ["government", "news", "education"]
+}

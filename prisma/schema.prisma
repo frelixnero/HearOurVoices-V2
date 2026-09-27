@@ -1,0 +1,1908 @@
+// HearOURVOICES — Prisma schema (source of truth: docs/HEAROURVOICES_MASTER_SPEC.md §28)
+// PostgreSQL relational core (§28), object storage for files (§14), search later (§27).
+//
+// Conventions:
+// - Every privileged mutation is recorded in AuditLog (§28.11, §4.6) — append-only.
+// - Enums encode the spec's controlled vocabularies so labels can't drift (§13, §23, §9.3).
+// - NOTE (DB gap): §28 references `source_id` across many tables but never defines a
+//   sources table. We add `Source` + `Citation` (foundation item 5). See docs/gap-analysis.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===========================================================================
+// 28.1 IDENTITY AND ACCESS
+// ===========================================================================
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+  RESTRICTED
+  CLOSED
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  phone        String?    @unique
+  passwordHash String? // null when using external auth (§28.1 external_auth_id)
+  externalAuthId String?  @unique
+  displayName  String
+  publicAlias  String? // approved public alias (§6.3)
+  status       UserStatus @default(PENDING)
+  mfaSecret    String? // TOTP secret; presence => MFA enabled (§32 privileged MFA)
+  emailVerifiedAt DateTime?
+  // Community Reports: users qualify as Independent Civic Journalists after a
+  // good record (higher-trust publishing lane). Granted, not self-claimed.
+  isJournalist Boolean  @default(false)
+  // Staff capabilities (granted by an admin). Moderators review the queue and set
+  // claim status; admins additionally manage users and grant roles.
+  isModerator  Boolean  @default(false)
+  isAdmin      Boolean  @default(false)
+  locale       String     @default("en-US")
+  timezone     String     @default("America/Chicago")
+  createdAt    DateTime   @default(now())
+  lastLoginAt  DateTime?
+
+  profile        UserProfile?
+  verifications  IdentityVerification[]
+  roles          UserRole[]
+  sessions       Session[]
+  reputationEvents ReputationEvent[]
+
+  @@index([status])
+}
+
+model UserProfile {
+  userId               String  @id
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  biography            String?
+  homeJurisdictionId   String?
+  homeJurisdiction     Jurisdiction? @relation(fields: [homeJurisdictionId], references: [id])
+  // Never publish precise address (§8.1, §33). Only the level a user opts into.
+  publicLocationLevel  String  @default("none") // none|city|county|district|state
+  profileImageUrl      String?
+  interests            String[] @default([])
+  notificationPreferences Json  @default("{}")
+}
+
+enum VerificationStatus {
+  STARTED
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model IdentityVerification {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verificationType    String // email|phone|residency|gov_id|official_office
+  provider            String?
+  status              VerificationStatus @default(STARTED)
+  verifiedName        String?
+  verifiedJurisdiction String?
+  completedAt         DateTime?
+  expiresAt           DateTime?
+  encryptedReference  String? // high-risk data — store only an encrypted pointer (§32)
+  createdAt           DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Role is a named capability set; assignment can be global or scoped (§29).
+model Role {
+  id          String     @id @default(cuid())
+  name        String     @unique // matches RoleName enum values in code
+  description String
+  assignments UserRole[]
+}
+
+enum RoleScopeType {
+  GLOBAL
+  JURISDICTION
+  INVESTIGATION
+  CAMPAIGN
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
+  scopeType RoleScopeType @default(GLOBAL)
+  scopeId   String? // e.g. jurisdiction id when scopeType=JURISDICTION
+  grantedBy String?
+  grantedAt DateTime @default(now())
+  revokedAt DateTime?
+
+  @@unique([userId, roleId, scopeType, scopeId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique // we store only a hash of the session token (§32)
+  deviceId  String?
+  ipHash    String? // peppered hash, never raw IP (§28.1, §33)
+  riskScore Int      @default(0) // bot-risk signal (§22)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ===========================================================================
+// 28.2 GOVERNMENT STRUCTURE
+// ===========================================================================
+
+model Jurisdiction {
+  id                String   @id @default(cuid())
+  name              String
+  type              String // city|county|school_district|state|congressional_district|...
+  parentId          String?
+  parent            Jurisdiction?  @relation("JurisdictionTree", fields: [parentId], references: [id])
+  children          Jurisdiction[] @relation("JurisdictionTree")
+  stateCode         String?
+  countryCode       String   @default("US")
+  boundaryReference String?
+  officialWebsite   String?
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  governmentBodies GovernmentBody[]
+  agencies         Agency[]
+  offices          Office[]
+  courts           Court[]
+  profiles         UserProfile[]
+
+  @@index([parentId])
+  @@index([type])
+}
+
+model GovernmentBody {
+  id             String  @id @default(cuid())
+  jurisdictionId String
+  jurisdiction   Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  name           String
+  type           String
+  officialWebsite String?
+  measures       Measure[]
+
+  @@index([jurisdictionId])
+}
+
+model Agency {
+  id             String  @id @default(cuid())
+  jurisdictionId String
+  jurisdiction   Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  governmentBodyId String?
+  name           String
+  type           String?
+  description    String?
+  officialWebsite String?
+  status         String  @default("active")
+  createdAt      DateTime @default(now())
+
+  offices        Office[]
+
+  @@index([jurisdictionId])
+}
+
+model Office {
+  id                String  @id @default(cuid())
+  jurisdictionId    String
+  jurisdiction      Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  agencyId          String?
+  agency            Agency? @relation(fields: [agencyId], references: [id])
+  title             String
+  officeType        String
+  electedOrAppointed String // elected|appointed
+  terms             OfficeTerm[]
+
+  @@index([jurisdictionId])
+}
+
+// A real-world person (official, judge, etc.). Demo data must be fictional (§44).
+model Person {
+  id                 String  @id @default(cuid())
+  fullName           String
+  dateOfBirthPublic  DateTime?
+  biography          String?
+  publicSource       String?
+  createdAt          DateTime @default(now())
+
+  officeTerms        OfficeTerm[]
+  promises           Promise[]
+  votes              Vote[]
+  statements         OfficialStatement[]
+  conflicts          Conflict[]
+  judgeRoles         Judge[]
+  prosecutorRoles    Prosecutor[]
+}
+
+model OfficeTerm {
+  id                String   @id @default(cuid())
+  officeId          String
+  office            Office   @relation(fields: [officeId], references: [id])
+  personId          String
+  person            Person   @relation(fields: [personId], references: [id])
+  startDate         DateTime
+  endDate           DateTime?
+  appointmentSource String?
+  status            String   @default("active")
+  promises          Promise[]
+
+  @@index([officeId])
+  @@index([personId])
+}
+
+// ===========================================================================
+// SOURCES & CITATIONS (foundation item 5) — ADDED, not in §28 explicitly.
+// Everything factual points at a Source; Citation is a polymorphic link so any
+// record (promise, vote, claim, event...) can cite one or more sources (§4.1).
+// ===========================================================================
+
+enum SourceType {
+  OFFICIAL_RECORD
+  COURT_FILING
+  MEETING_RECORD
+  NEWS_REPORT
+  ACADEMIC_STUDY
+  DATASET
+  OFFICIAL_STATEMENT
+  PUBLIC_WEBPAGE
+  FOIA_PRODUCTION
+  OTHER
+}
+
+enum SourceQuality {
+  PRIMARY_OFFICIAL
+  SECONDARY_RELIABLE
+  UNVERIFIED
+  DISPUTED
+}
+
+model Source {
+  id          String     @id @default(cuid())
+  title       String
+  sourceType  SourceType
+  quality     SourceQuality @default(UNVERIFIED)
+  publisher   String?
+  url         String?
+  publishedAt DateTime?
+  retrievedAt DateTime?
+  description String?
+  evidenceId  String? // optional link to a stored EvidenceItem copy of the source
+  evidence    EvidenceItem? @relation(fields: [evidenceId], references: [id])
+  addedByUserId String?
+  createdAt   DateTime   @default(now())
+
+  citations   Citation[]
+
+  @@index([sourceType])
+}
+
+model Citation {
+  id         String   @id @default(cuid())
+  sourceId   String
+  source     Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  // Polymorphic subject: which record this citation supports.
+  subjectType String // promise|vote|measure|claim|case_event|statement|scorecard_metric|...
+  subjectId   String
+  locator     String? // page, timestamp, paragraph
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([subjectType, subjectId])
+  @@index([sourceId])
+}
+
+// ===========================================================================
+// 28.3 OFFICIAL ACCOUNTABILITY
+// ===========================================================================
+
+enum PromiseStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PARTIALLY_COMPLETED
+  COMPLETED
+  BLOCKED
+  REVERSED
+  BROKEN
+  CANNOT_BE_VERIFIED
+  NO_LONGER_APPLICABLE
+}
+
+model Promise {
+  id             String  @id @default(cuid())
+  personId       String
+  person         Person  @relation(fields: [personId], references: [id])
+  officeTermId   String?
+  officeTerm     OfficeTerm? @relation(fields: [officeTermId], references: [id])
+  text           String
+  category       String?
+  madeAt         DateTime?
+  deadline       DateTime?
+  status         PromiseStatus @default(NOT_STARTED)
+  confidence     String  @default("unclear")
+  lastReviewedAt DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([personId])
+}
+
+model Measure {
+  id               String  @id @default(cuid())
+  governmentBodyId String
+  governmentBody   GovernmentBody @relation(fields: [governmentBodyId], references: [id])
+  title            String
+  officialNumber   String?
+  summary          String?
+  introducedAt     DateTime?
+  decidedAt        DateTime?
+  status           String?
+  financialImpact  Decimal?
+  votes            Vote[]
+
+  @@index([governmentBodyId])
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  measureId String
+  measure   Measure  @relation(fields: [measureId], references: [id])
+  personId  String
+  person    Person   @relation(fields: [personId], references: [id])
+  voteValue String // yes|no|abstain|absent
+  voteDate  DateTime?
+
+  @@index([measureId])
+  @@index([personId])
+}
+
+model OfficialStatement {
+  id            String   @id @default(cuid())
+  personId      String?
+  person        Person?  @relation(fields: [personId], references: [id])
+  agencyId      String?
+  text          String
+  statementDate DateTime?
+  statementType String?
+  createdAt     DateTime @default(now())
+}
+
+model Conflict {
+  id           String   @id @default(cuid())
+  personId     String?
+  person       Person?  @relation(fields: [personId], references: [id])
+  agencyId     String?
+  conflictType String
+  description  String
+  status       String   @default("disclosed")
+  reviewedAt   DateTime?
+  createdAt    DateTime @default(now())
+}
+
+model Complaint {
+  id            String   @id @default(cuid())
+  targetType    String // person|agency|court|...
+  targetId      String
+  complaintType String
+  filedAt       DateTime?
+  status        String   @default("filed")
+  disposition   String?
+  publicSummary String?
+  createdAt     DateTime @default(now())
+
+  @@index([targetType, targetId])
+}
+
+// ===========================================================================
+// 28.4 COURTS AND CASES (Phase 2 surface; modeled now to avoid migration churn)
+// ===========================================================================
+
+model Court {
+  id             String  @id @default(cuid())
+  jurisdictionId String
+  jurisdiction   Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  name           String
+  courtType      String?
+  level          String?
+  officialWebsite String?
+  judges         Judge[]
+  cases          Case[]
+}
+
+model Judge {
+  id              String   @id @default(cuid())
+  personId        String
+  person          Person   @relation(fields: [personId], references: [id])
+  courtId         String
+  court           Court    @relation(fields: [courtId], references: [id])
+  startDate       DateTime?
+  endDate         DateTime?
+  selectionMethod String?
+  status          String   @default("active")
+}
+
+model ProsecutorOffice {
+  id              String  @id @default(cuid())
+  jurisdictionId  String
+  name            String
+  officialWebsite String?
+  prosecutors     Prosecutor[]
+}
+
+model Prosecutor {
+  id                 String   @id @default(cuid())
+  personId           String
+  person             Person   @relation(fields: [personId], references: [id])
+  prosecutorOfficeId String
+  prosecutorOffice   ProsecutorOffice @relation(fields: [prosecutorOfficeId], references: [id])
+  startDate          DateTime?
+  endDate            DateTime?
+  status             String   @default("active")
+}
+
+enum CaseVisibility {
+  PUBLIC
+  PARTIALLY_PUBLIC
+  RESTRICTED
+  SEALED
+  EXPUNGED
+  ARCHIVED
+  REMOVED
+}
+
+model Case {
+  id            String   @id @default(cuid())
+  courtId       String
+  court         Court    @relation(fields: [courtId], references: [id])
+  caseNumber    String
+  caseType      String?
+  filedAt       DateTime?
+  closedAt      DateTime?
+  status        String?
+  publicTitle   String?
+  visibility    CaseVisibility @default(PUBLIC)
+  sealingStatus String?
+  events        CaseEvent[]
+  parties       CaseParty[]
+  charges       Charge[]
+  outcomes      CaseOutcome[]
+
+  @@index([courtId])
+}
+
+model CaseParty {
+  id             String  @id @default(cuid())
+  caseId         String
+  case           Case    @relation(fields: [caseId], references: [id])
+  personOrOrgType String
+  personOrOrgId  String?
+  role           String
+  publicName     String?
+  protected      Boolean @default(false) // victim/minor protection (§12.4)
+}
+
+model CaseEvent {
+  id                 String   @id @default(cuid())
+  caseId             String
+  case               Case     @relation(fields: [caseId], references: [id])
+  eventType          String
+  eventAt            DateTime?
+  officialText       String?
+  plainSummary       String?
+  verificationStatus String   @default("unverified")
+  visibility         CaseVisibility @default(PUBLIC)
+  redactionStatus    String   @default("none")
+  addedByUserId      String?
+  reviewedByUserId   String?
+  createdAt          DateTime @default(now())
+
+  @@index([caseId])
+}
+
+model Charge {
+  id          String   @id @default(cuid())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id])
+  statute     String?
+  description String?
+  level       String?
+  filedAt     DateTime?
+  outcome     String?
+}
+
+model CaseOutcome {
+  id          String   @id @default(cuid())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id])
+  outcomeType String
+  outcomeDate DateTime?
+  sentence    String?
+  disposition String?
+}
+
+// ===========================================================================
+// 28.5 CLAIMS AND EVIDENCE — the core of the platform (§13, §14)
+// ===========================================================================
+
+enum ClaimType {
+  OBSERVATION
+  ALLEGATION
+  OFFICIAL_STATEMENT
+  STATISTICAL_CLAIM
+  LEGAL_CLAIM
+  FINANCIAL_CLAIM
+  PROMISE
+  PREDICTION
+  OPINION
+  CONCLUSION
+  CORRECTION
+}
+
+// §13.5 review workflow states. Serious allegations never auto-publish (§45 rule 5).
+enum ClaimStatus {
+  DRAFT
+  SUBMITTED
+  AUTO_CHECK
+  NEEDS_EVIDENCE
+  IN_RESEARCH_REVIEW
+  IN_LEGAL_REVIEW
+  AWAITING_OFFICIAL_RESPONSE
+  PUBLISHED
+  RETURNED
+  RESTRICTED
+  REJECTED
+}
+
+enum ConfidenceLabel {
+  VERIFIED
+  STRONGLY_SUPPORTED
+  PARTIALLY_SUPPORTED
+  UNCLEAR
+  DISPUTED
+  UNSUPPORTED
+  MISLEADING
+  FALSE
+  OUTDATED
+  CANNOT_BE_VERIFIED
+}
+
+enum ContentVisibility {
+  PUBLIC
+  REGISTERED
+  VERIFIED_RESEARCHERS
+  INVESTIGATION_TEAM
+  MODERATOR_ONLY
+  LEGAL_REVIEW_ONLY
+  OWNER_ONLY
+  SEALED
+}
+
+model Claim {
+  id             String   @id @default(cuid())
+  submitterUserId String
+  claimType      ClaimType
+  text           String
+  targetType     String // person|agency|office|court|case|...
+  targetId       String?
+  occurredAt     DateTime?
+  jurisdictionId String?
+  topic          String?
+  status         ClaimStatus @default(DRAFT)
+  confidenceLabel ConfidenceLabel @default(UNCLEAR)
+  visibility     ContentVisibility @default(OWNER_ONLY)
+  // Serious-misconduct claims require human review before publish (§25.2, §45 rule 5).
+  seriousAllegation Boolean @default(false)
+  publishedAt    DateTime?
+  officialResponseStatus String @default("none")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  reviews        ClaimReview[]
+  evidenceLinks  ClaimEvidenceLink[]
+  responses      OfficialResponse[]
+  corrections    Correction[]
+
+  @@index([status])
+  @@index([targetType, targetId])
+  @@index([jurisdictionId])
+}
+
+model ClaimReview {
+  id             String   @id @default(cuid())
+  claimId        String
+  claim          Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  reviewerUserId String
+  reviewType     String // research|legal|safety|duplicate
+  decision       String // approve|reject|needs_evidence|escalate
+  rationale      String
+  createdAt      DateTime @default(now())
+
+  @@index([claimId])
+}
+
+enum RedactionStatus {
+  NONE
+  NEEDED
+  IN_PROGRESS
+  REDACTED
+  APPROVED
+}
+
+model EvidenceItem {
+  id                String   @id @default(cuid())
+  uploaderUserId    String
+  title             String
+  description       String?
+  evidenceType      String // pdf|image|audio|video|... (§14.2)
+  // ORIGINAL and PUBLIC copies are stored separately (§14.4, §32 data separation).
+  originalStorageKey String  // restricted bucket, signed access only
+  publicStorageKey   String? // redacted/processed copy for public viewing
+  originalHash      String?  // sha-256 of original (§14.3 chain-of-custody integrity)
+  processedHash     String?
+  visibility        ContentVisibility @default(OWNER_ONLY)
+  verificationStatus String  @default("unverified")
+  redactionStatus   RedactionStatus @default(NONE)
+  legalHold         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  metadata          EvidenceMetadata?
+  chainEvents       EvidenceChainEvent[]
+  redactions        Redaction[]
+  claimLinks        ClaimEvidenceLink[]
+  sources           Source[]
+
+  @@index([uploaderUserId])
+  @@index([visibility])
+}
+
+model EvidenceMetadata {
+  evidenceId     String  @id
+  evidence       EvidenceItem @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  sourceName     String?
+  sourceType     String?
+  sourceDate     DateTime?
+  custodian      String?
+  originalFilename String?
+  mimeType       String?
+  fileSize       Int?
+  extractedText  String? // OCR/transcript (§14.3) — never for restricted content publicly
+  metadataJson   Json    @default("{}")
+}
+
+enum EvidenceRelationship {
+  SUPPORTS
+  PARTIALLY_SUPPORTS
+  CONTRADICTS
+  PROVIDES_CONTEXT
+  IRRELEVANT
+  INCONCLUSIVE
+}
+
+model ClaimEvidenceLink {
+  id             String   @id @default(cuid())
+  claimId        String
+  claim          Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  evidenceId     String
+  evidence       EvidenceItem @relation(fields: [evidenceId], references: [id])
+  relationship   EvidenceRelationship
+  strength       String   @default("unclear")
+  reviewerUserId String?
+  createdAt      DateTime @default(now())
+
+  @@unique([claimId, evidenceId])
+  @@index([evidenceId])
+}
+
+// Append-only chain of custody (§14.5). Never deleted.
+model EvidenceChainEvent {
+  id           String   @id @default(cuid())
+  evidenceId   String
+  evidence     EvidenceItem @relation(fields: [evidenceId], references: [id])
+  eventType    String // uploaded|accessed|downloaded|redacted|reviewed|published|...
+  actorUserId  String?
+  occurredAt   DateTime @default(now())
+  metadataJson Json     @default("{}")
+
+  @@index([evidenceId])
+}
+
+model Redaction {
+  id             String   @id @default(cuid())
+  evidenceId     String
+  evidence       EvidenceItem @relation(fields: [evidenceId], references: [id])
+  redactedCopyKey String
+  reason         String
+  redactedBy     String
+  approvedBy     String?
+  createdAt      DateTime @default(now())
+
+  @@index([evidenceId])
+}
+
+// ===========================================================================
+// 24 OFFICIAL RESPONSE & CORRECTION (foundation items 11) — first-class (§24)
+// ===========================================================================
+
+model OfficialResponse {
+  id            String   @id @default(cuid())
+  claimId       String?
+  claim         Claim?   @relation(fields: [claimId], references: [id])
+  // Responder must be a verified official/affected party (§24). Never auto-true (§24).
+  responderUserId String
+  subjectType   String // claim|scorecard|official_profile
+  subjectId     String
+  responseType  String // context|dispute|correction_request|official_statement|appeal
+  body          String
+  status        String   @default("submitted")
+  createdAt     DateTime @default(now())
+
+  @@index([subjectType, subjectId])
+}
+
+model Correction {
+  id          String   @id @default(cuid())
+  claimId     String?
+  claim       Claim?   @relation(fields: [claimId], references: [id])
+  subjectType String
+  subjectId   String
+  description String
+  correctedBy String
+  visible     Boolean  @default(true) // corrections stay visible & timestamped (§24)
+  createdAt   DateTime @default(now())
+
+  @@index([subjectType, subjectId])
+}
+
+// ===========================================================================
+// 28.10 SCORECARDS (§10) — missing data is NEVER zero (§10.5, §45 rule 10)
+// ===========================================================================
+
+model ScorecardMethodology {
+  id               String   @id @default(cuid())
+  name             String
+  entityType       String // official|agency|judge|prosecutor|court
+  version          String
+  description      String?
+  effectiveFrom    DateTime
+  effectiveTo      DateTime?
+  publicDocumentUrl String?
+  scorecards       Scorecard[]
+
+  @@unique([name, version])
+}
+
+model Scorecard {
+  id               String   @id @default(cuid())
+  entityType       String
+  entityId         String
+  methodologyId    String
+  methodology      ScorecardMethodology @relation(fields: [methodologyId], references: [id])
+  periodStart      DateTime
+  periodEnd        DateTime
+  overallScore     Decimal? // null when insufficientData (§10.4) — NOT zero
+  confidence       String   @default("insufficient_data")
+  insufficientData Boolean  @default(true)
+  publishedAt      DateTime?
+  createdAt        DateTime @default(now())
+
+  categories       ScorecardCategory[]
+  appeals          ScorecardAppeal[]
+
+  @@index([entityType, entityId])
+}
+
+model ScorecardCategory {
+  id          String   @id @default(cuid())
+  scorecardId String
+  scorecard   Scorecard @relation(fields: [scorecardId], references: [id], onDelete: Cascade)
+  categoryName String
+  score        Decimal?
+  weight       Decimal
+  confidence   String   @default("insufficient_data")
+  explanation  String?
+  metrics      ScorecardMetric[]
+}
+
+model ScorecardMetric {
+  id             String   @id @default(cuid())
+  categoryId     String
+  category       ScorecardCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  metricName     String
+  rawValue       Decimal?
+  normalizedScore Decimal?
+  weight         Decimal
+  confidence     String   @default("insufficient_data")
+}
+
+model ScorecardAppeal {
+  id             String   @id @default(cuid())
+  scorecardId    String
+  scorecard      Scorecard @relation(fields: [scorecardId], references: [id])
+  appellantUserId String
+  reason         String
+  evidenceId     String?
+  status         String   @default("submitted")
+  decision       String?
+  decidedAt      DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([scorecardId])
+}
+
+// ===========================================================================
+// 28.6 PUBLIC RECORDS (§15)
+// ===========================================================================
+
+enum RecordsRequestStatus {
+  DRAFT
+  READY_TO_SEND
+  SENT
+  ACKNOWLEDGED
+  CLARIFICATION_REQUESTED
+  FEE_ESTIMATE_RECEIVED
+  PAYMENT_NEEDED
+  PROCESSING
+  PARTIALLY_FULFILLED
+  FULFILLED
+  DENIED
+  APPEALED
+  CLOSED
+  OVERDUE
+  LITIGATION_REVIEW
+}
+
+model RecordsRequest {
+  id            String   @id @default(cuid())
+  creatorUserId String
+  agencyId      String?
+  jurisdictionId String?
+  title         String
+  requestText   String
+  sentAt        DateTime?
+  status        RecordsRequestStatus @default(DRAFT)
+  feeLimit      Decimal?
+  feeEstimate   Decimal?
+  dueDate       DateTime?
+  public        Boolean  @default(false)
+  campaignId    String?
+  createdAt     DateTime @default(now())
+
+  events        RecordsRequestEvent[]
+  productions   RecordsProduction[]
+  denials       RecordsDenial[]
+
+  @@index([creatorUserId])
+  @@index([status])
+}
+
+model RecordsRequestEvent {
+  id          String   @id @default(cuid())
+  requestId   String
+  request     RecordsRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  eventType   String
+  eventAt     DateTime @default(now())
+  description String?
+  createdBy   String?
+}
+
+model RecordsProduction {
+  id          String   @id @default(cuid())
+  requestId   String
+  request     RecordsRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  evidenceId  String?
+  receivedAt  DateTime?
+  description String?
+}
+
+model RecordsDenial {
+  id           String   @id @default(cuid())
+  requestId    String
+  request      RecordsRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  reason       String
+  exemption    String?
+  denialDate   DateTime?
+  appealStatus String?
+}
+
+// ===========================================================================
+// 28.11 MODERATION, REPUTATION, AUDIT (§21, §23, §4.6)
+// ===========================================================================
+
+model ContentReport {
+  id             String   @id @default(cuid())
+  reporterUserId String
+  contentType    String
+  contentId      String
+  reason         String // matches ModerationReason vocabulary (§23.3)
+  details        String?
+  status         String   @default("open")
+  createdAt      DateTime @default(now())
+
+  @@index([contentType, contentId])
+  @@index([status])
+}
+
+model ModerationAction {
+  id                String   @id @default(cuid())
+  contentType       String
+  contentId         String
+  moderatorUserId   String
+  actionType        String // limit|remove|needs_evidence|needs_redaction|legal_hold|...
+  reason            String // required (§23.4, §45 rule 8)
+  publicExplanation String? // published moderation reason (§23.4/§23.5)
+  startsAt          DateTime @default(now())
+  endsAt            DateTime?
+  appeals           ModerationAppeal[]
+
+  @@index([contentType, contentId])
+}
+
+model ModerationAppeal {
+  id                 String   @id @default(cuid())
+  moderationActionId String
+  moderationAction   ModerationAction @relation(fields: [moderationActionId], references: [id])
+  appellantUserId    String
+  reason             String
+  status             String   @default("submitted")
+  // Reviewed by someone other than original moderator when possible (§23.6).
+  reviewedBy         String?
+  decision           String?
+  decidedAt          DateTime?
+  createdAt          DateTime @default(now())
+
+  @@index([moderationActionId])
+}
+
+model ReputationEvent {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dimension  String // evidence_quality|research_accuracy|civic_participation|... (§21.3)
+  points     Int
+  reason     String
+  sourceType String?
+  sourceId   String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+model BotRiskEvent {
+  id           String   @id @default(cuid())
+  userId       String?
+  deviceId     String?
+  riskType     String
+  riskScore    Int
+  metadataJson Json     @default("{}")
+  createdAt    DateTime @default(now())
+}
+
+// Append-only audit log (§28.11, §4.6, §45 rule 14/18). No update/delete in app code.
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String?
+  beforeJson  Json?
+  afterJson   Json?
+  ipHash      String?
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorUserId])
+  @@index([createdAt])
+}
+
+// ===========================================================================
+// 26 NOTIFICATIONS (foundation item 17)
+// ===========================================================================
+
+model Follow {
+  id         String   @id @default(cuid())
+  userId     String
+  targetType String // jurisdiction|official|agency|case|claim|petition|campaign|...
+  targetId   String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // new_record|claim_status_change|official_response|... (§26)
+  title     String
+  body      String?
+  linkPath  String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+}
+
+// ===========================================================================
+// 28.7 CIVICFUND (§16) — transparent ledger; missing/pending funds never assumed
+// ===========================================================================
+
+enum CampaignStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  LIVE
+  FUNDED
+  ACTIVE
+  AWAITING_RECORDS
+  DELIVERABLE_PUBLISHED
+  PARTIALLY_COMPLETED
+  FAILED
+  REFUNDING
+  CLOSED
+}
+
+model Campaign {
+  id             String   @id @default(cuid())
+  creatorUserId  String
+  campaignType   String // public_records|investigation|court_transparency|community_audit (§16.2)
+  title          String
+  description    String
+  jurisdictionId String?
+  goalAmount     Decimal
+  status         CampaignStatus @default(DRAFT)
+  approvedBy     String?
+  startsAt       DateTime?
+  endsAt         DateTime?
+  platformFeeRate Decimal @default(0.05)
+  refundPolicy   String
+  createdAt      DateTime @default(now())
+
+  milestones   CampaignMilestone[]
+  contributions Contribution[]
+  expenses     CampaignExpense[]
+  updates      CampaignUpdate[]
+
+  @@index([status])
+}
+
+model CampaignMilestone {
+  id          String   @id @default(cuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  targetAmount Decimal?
+  status      String   @default("pending")
+  dueAt       DateTime?
+  completedAt DateTime?
+}
+
+model Contribution {
+  id               String   @id @default(cuid())
+  campaignId       String
+  campaign         Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contributorUserId String
+  amount           Decimal
+  processorFee     Decimal  @default(0)
+  platformFee      Decimal  @default(0)
+  status           String   @default("succeeded") // pending|succeeded|refunded|failed
+  anonymousDisplay Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([campaignId])
+}
+
+model CampaignExpense {
+  id                String   @id @default(cuid())
+  campaignId        String
+  campaign          Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  category          String
+  vendor            String
+  amount            Decimal
+  receiptEvidenceId String?
+  description       String
+  status            String   @default("proposed") // proposed|approved|paid|rejected
+  approvedBy        String?
+  paidAt            DateTime?
+  createdAt         DateTime @default(now())
+
+  @@index([campaignId])
+}
+
+model CampaignUpdate {
+  id           String   @id @default(cuid())
+  campaignId   String
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  authorUserId String
+  title        String
+  body         String
+  createdAt    DateTime @default(now())
+}
+
+// ===========================================================================
+// 28.8 PETITIONS & ACTION (§17)
+// ===========================================================================
+
+model Petition {
+  id            String   @id @default(cuid())
+  creatorUserId String
+  title         String
+  requestText   String
+  targetType    String
+  targetId      String?
+  jurisdictionId String?
+  status        String   @default("draft")
+  deadline      DateTime?
+  signatureGoal Int?
+  public        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  signatures    PetitionSignature[]
+
+  @@index([status])
+}
+
+model PetitionSignature {
+  id                  String   @id @default(cuid())
+  petitionId          String
+  petition            Petition @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+  userId              String
+  verifiedJurisdiction String?
+  displayPreference   String   @default("private") // public|private
+  fraudStatus         String   @default("clear")
+  signedAt            DateTime @default(now())
+
+  // One signature per user per petition (duplicate protection, §17.3).
+  @@unique([petitionId, userId])
+  @@index([petitionId])
+}
+
+model ActionPlan {
+  id            String   @id @default(cuid())
+  creatorUserId String
+  title         String
+  jurisdictionId String?
+  status        String   @default("draft")
+  description   String?
+  createdAt     DateTime @default(now())
+
+  steps         ActionStep[]
+}
+
+model ActionStep {
+  id           String   @id @default(cuid())
+  actionPlanId String
+  actionPlan   ActionPlan @relation(fields: [actionPlanId], references: [id], onDelete: Cascade)
+  sequence     Int
+  actionType   String
+  description  String
+  dueAt        DateTime?
+  status       String   @default("pending")
+}
+
+// ===========================================================================
+// 28.9 INVESTIGATIONS (§20)
+// ===========================================================================
+
+model Investigation {
+  id               String   @id @default(cuid())
+  title            String
+  researchQuestion String
+  jurisdictionId   String?
+  leadUserId       String
+  status           String   @default("proposal") // §20.2 phases
+  visibility       ContentVisibility @default(INVESTIGATION_TEAM)
+  methodology      String?
+  limitations      String?
+  publishedAt      DateTime?
+  createdAt        DateTime @default(now())
+
+  members  InvestigationMember[]
+  tasks    InvestigationTask[]
+  findings InvestigationFinding[]
+
+  @@index([status])
+}
+
+model InvestigationMember {
+  id               String   @id @default(cuid())
+  investigationId  String
+  investigation    Investigation @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  userId           String
+  role             String // lead|researcher|reviewer
+  conflictDisclosure String?
+  joinedAt         DateTime @default(now())
+
+  @@unique([investigationId, userId])
+}
+
+model InvestigationTask {
+  id              String   @id @default(cuid())
+  investigationId String
+  investigation   Investigation @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  title           String
+  assignedTo      String?
+  status          String   @default("open")
+  dueAt           DateTime?
+}
+
+model InvestigationFinding {
+  id              String   @id @default(cuid())
+  investigationId String
+  investigation   Investigation @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  title           String
+  summary         String
+  confidence      String   @default("unclear")
+  status          String   @default("draft")
+  publishedAt     DateTime?
+}
+
+// ===========================================================================
+// 18/19 ELECTIONS & CANDIDATE GUIDE (§18 Replacement Tracker, §19 Vote Hub)
+// Plain-language, nonpartisan comparison. Verified facts are kept separate from
+// campaign claims (§18.3). Demo data is fictional (§44).
+// ===========================================================================
+
+model Election {
+  id             String   @id @default(cuid())
+  name           String
+  jurisdictionId String?
+  electionDate   DateTime
+  type           String // general|primary|special|recall
+  status         String   @default("upcoming") // upcoming|active|past
+  description    String?
+  createdAt      DateTime @default(now())
+
+  races          Race[]
+
+  @@index([status])
+  @@index([electionDate])
+}
+
+model Race {
+  id          String   @id @default(cuid())
+  electionId  String
+  election    Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  title       String // e.g. "Mayor of Riverbend"
+  description String?
+  candidates  Candidate[]
+}
+
+model Candidate {
+  id            String   @id @default(cuid())
+  raceId        String
+  race          Race     @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  name          String
+  party         String?
+  incumbent     Boolean  @default(false)
+  website       String?
+  bio           String? // plain-language, from an official/campaign source
+  photoGradient String   @default("linear-gradient(135deg,#123f52,#1e6d78)")
+
+  positions     CandidatePosition[]
+  prosCons      CandidateProsCon[]
+}
+
+model CandidatePosition {
+  id          String  @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  topic       String // e.g. "Housing", "Police budget"
+  stance      String // for|against|mixed
+  summary     String // plain-language, 4th-grade reading level
+  sourceUrl   String?
+}
+
+model CandidateProsCon {
+  id          String  @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  kind        String // pro|con
+  text        String // plain-language
+}
+
+// ===========================================================================
+// STORY-SHARING PLATFORM (current product). Personal experiences shared safely,
+// anonymously or publicly, moderated for safety. Reuses moderation + audit.
+// ===========================================================================
+
+enum StoryStatus {
+  PUBLISHED       // live in the feed
+  PENDING_REVIEW  // held by the safety scan for human review before publishing
+  REMOVED         // taken down by moderation
+}
+
+model Story {
+  id            String   @id @default(cuid())
+  authorUserId  String?  // known to the platform even when displayed anonymously
+  displayName   String   @default("Anonymous")
+  anonymous     Boolean  @default(true)
+  title         String?
+  body          String
+  topics        String[] @default([]) // topic slugs (workplace|school|...)
+  hideLocation  Boolean  @default(true)
+  status        StoryStatus @default(PUBLISHED)
+  supportCount  Int      @default(0)
+  commentCount  Int      @default(0)
+  createdAt     DateTime @default(now())
+  publishedAt   DateTime?
+
+  supports      StorySupport[]
+  comments      StoryComment[]
+
+  @@index([status, publishedAt])
+  @@index([authorUserId])
+}
+
+// One "heart"/support per user per story (§ dedupe).
+model StorySupport {
+  id        String   @id @default(cuid())
+  storyId   String
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([storyId, userId])
+  @@index([storyId])
+}
+
+model StoryComment {
+  id           String   @id @default(cuid())
+  storyId      String
+  story        Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  authorUserId String?
+  displayName  String   @default("Anonymous")
+  anonymous    Boolean  @default(true)
+  body         String
+  status       StoryStatus @default(PUBLISHED)
+  createdAt    DateTime @default(now())
+
+  @@index([storyId])
+}
+
+// Browsable topics (Workplace, School, Healthcare, Justice, Military, Other).
+model Topic {
+  id          String @id @default(cuid())
+  slug        String @unique
+  name        String
+  description String?
+  sortOrder   Int    @default(0)
+}
+
+// Community-support directory (crisis hotlines, mental health, legal, groups).
+model SupportResource {
+  id          String  @id @default(cuid())
+  category    String // crisis|mental_health|legal|community
+  name        String
+  description String
+  phone       String?
+  url         String?
+  region      String? @default("US")
+  sortOrder   Int     @default(0)
+}
+
+// ===========================================================================
+// RUMORS — people post a rumor/opinion; the platform GRADES how accurate it is.
+// Accuracy comes from community votes + submitted evidence, and an optional
+// reviewer verdict that overrides the crowd. Default is UNVERIFIED until there is
+// enough input (missing data is never treated as "true" or "false").
+// ===========================================================================
+
+enum AccuracyGrade {
+  TRUE
+  MOSTLY_TRUE
+  MIXED
+  UNVERIFIED
+  MOSTLY_FALSE
+  FALSE
+}
+
+enum RumorStatus {
+  OPEN
+  PENDING_REVIEW
+  REMOVED
+}
+
+model Rumor {
+  id              String   @id @default(cuid())
+  submitterUserId String?
+  displayName     String   @default("Anonymous")
+  anonymous       Boolean  @default(true)
+  text            String
+  topic           String?
+  status          RumorStatus @default(OPEN)
+  // Cached community tallies (source of truth is the RumorVote rows).
+  accurateVotes   Int      @default(0)
+  inaccurateVotes Int      @default(0)
+  // Optional official verdict — overrides the crowd when set.
+  officialGrade   AccuracyGrade?
+  officialRationale String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  votes    RumorVote[]
+  evidence RumorEvidence[]
+
+  @@index([status, createdAt])
+}
+
+model RumorVote {
+  id        String   @id @default(cuid())
+  rumorId   String
+  rumor     Rumor    @relation(fields: [rumorId], references: [id], onDelete: Cascade)
+  userId    String
+  vote      String // accurate | inaccurate
+  createdAt DateTime @default(now())
+
+  @@unique([rumorId, userId])
+  @@index([rumorId])
+}
+
+model RumorEvidence {
+  id          String   @id @default(cuid())
+  rumorId     String
+  rumor       Rumor    @relation(fields: [rumorId], references: [id], onDelete: Cascade)
+  userId      String?
+  displayName String   @default("Anonymous")
+  anonymous   Boolean  @default(true)
+  stance      String // supports | refutes
+  note        String
+  url         String?
+  createdAt   DateTime @default(now())
+
+  @@index([rumorId])
+}
+
+// ===========================================================================
+// INDEPENDENT JOURNALIST REPORTS — neutral, labeled, sourced reporting.
+// Rules enforced in the service/validation:
+//  - the report MUST be labeled by type; a RUMOR is clearly marked unverified,
+//  - it MUST include a faithful written account of what was actually said,
+//  - it MUST link the source (the video/article),
+//  - it MUST explain why it matters,
+//  - the author affirms neutrality; a loaded-language check flags editorializing.
+// ===========================================================================
+
+// Two lanes of the Community Reports feature.
+enum ReportLane {
+  CITIZEN     // ordinary users: tips & opinions
+  JOURNALIST  // higher-trust, structured, neutral reporting
+}
+
+// Every citizen post carries one visible label so nothing looks like proven fact.
+enum PostLabel {
+  OPINION
+  UNVERIFIED_TIP
+  FIRSTHAND_ACCOUNT
+  EVIDENCE_SUBMITTED
+  CORRECTION_ISSUED
+  VERIFIED_BY_RECORDS
+  DISPROVEN
+}
+
+// Where a claim stands. Evolves over time as evidence comes in — NOT a star
+// rating, and unresolved claims are never "graded" as true or false.
+// (Named ReportClaimStatus to avoid colliding with the legacy civic ClaimStatus.)
+enum ReportClaimStatus {
+  UNREVIEWED
+  UNVERIFIED
+  EVIDENCE_DEVELOPING
+  PARTIALLY_SUPPORTED
+  VERIFIED
+  DISPUTED
+  DISPROVEN
+  RETRACTED
+}
+
+model CommunityReport {
+  id           String   @id @default(cuid())
+  authorUserId String
+  lane         ReportLane
+  displayName  String   @default("Anonymous")
+  anonymous    Boolean  @default(true)
+  label        PostLabel @default(UNVERIFIED_TIP)   // citizen-lane visible label
+  claimStatus  ReportClaimStatus @default(UNREVIEWED)
+  title        String
+  body         String
+  topic        String?
+  sourceUrl    String?
+  // Journalist-lane structured fields (required by validation for JOURNALIST).
+  exactClaim       String? // the exact claim being examined
+  videoShows       String? // what the video directly shows
+  videoDoesntProve String? // what it does NOT prove
+  confirmedParts   String? // which parts are confirmed / unconfirmed
+  origin           String? // where the information originated
+  whyImportant     String? // why it matters to the community
+  affectedParty    String? // the person/agency named
+  affectedResponse String? // their response, or "did not respond"
+  conflicts        String? // disclosed political/financial/personal conflicts
+  neutralityFlags  String[] @default([]) // loaded-language flags (transparency)
+  status       StoryStatus @default(PUBLISHED) // publish state (reuses enum)
+  createdAt    DateTime @default(now())
+  publishedAt  DateTime?
+
+  corrections  CommunityReportCorrection[]
+  statusEvents ClaimStatusEvent[]
+
+  @@index([lane, status, publishedAt])
+  @@index([authorUserId])
+  @@index([claimStatus])
+}
+
+model CommunityReportCorrection {
+  id          String   @id @default(cuid())
+  reportId    String
+  report      CommunityReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  note        String
+  correctedBy String
+  voluntary   Boolean  @default(true) // voluntary correction counts positively toward the record
+  createdAt   DateTime @default(now())
+
+  @@index([reportId])
+}
+
+// ===========================================================================
+// CIVIC NEWS + PUBLIC JUDGMENT — main-page feed of authority actions (local /
+// state / nation). Each item is neutral facts + evidence + pros/cons + a process
+// check; the VERDICT (Good/Bad/Needs Info) comes from PUBLIC votes, not the
+// platform, so nothing is editorialized or asserted as fact by us.
+// ===========================================================================
+
+enum CivicScope {
+  LOCAL
+  STATE
+  NATION
+}
+
+enum CivicVerdict {
+  GOOD_MOVE
+  BAD_MOVE
+  NEEDS_INFO
+}
+
+enum EvidenceLabel {
+  DOCUMENTED
+  RECORDED
+  MISSING
+  UNVERIFIED
+}
+
+// One engine for every authority — you only change the evidence you pull.
+enum AuthorityCategory {
+  POLICE
+  LAWMAKER
+  JUDGE
+  COUNCIL
+  AGENCY
+  COMMITTEE
+  OVERSIGHT
+  EXECUTIVE
+  OTHER
+}
+
+model CivicNews {
+  id           String   @id @default(cuid())
+  scope        CivicScope
+  authority    AuthorityCategory @default(OTHER)
+  title        String
+  actorType    String   // City Council | Mayor | Police | Governor | Congress | President | Agency…
+  actorName    String?  // optional; kept factual
+  actorKey     String?  // normalized actor id for history/pattern tracking
+  jurisdiction String?  // "Riverbend, ZZ" | "State of Columbia" | "U.S. House"
+  actionType   String?  // congress_debate | cabinet_appointment | town_meeting | committee_hearing | agency_action | city_council | other — drives the plain-language module
+  whatHappened String   // plain-language facts (action summary)
+  whyItMatters String   // why the public should care
+  nextStep     String?  // "What happens next" — the next step in the process
+  pros         String[] @default([]) // sourced tradeoffs (for)
+  cons         String[] @default([]) // sourced tradeoffs (against)
+  alternatives String[] @default([]) // better options they could have taken
+  powerMap     String[] @default([]) // who could have stopped/changed it ("Mayor — could have vetoed")
+  // Process check — factual yes/no/unknown (null = unknown).
+  recordedVote    Boolean?
+  publicNotice    Boolean?
+  amendmentPosted Boolean?
+  meetingRecorded Boolean?
+  publicComment   Boolean?
+  procedureLegal  Boolean?
+  impactLevel  Int      @default(0) // 0–5
+  // Cached public-judgment tallies (source of truth is CivicVote rows).
+  goodVotes    Int      @default(0)
+  badVotes     Int      @default(0)
+  infoVotes    Int      @default(0)
+  status       StoryStatus @default(PUBLISHED)
+  createdBy    String?  // staff/journalist who published it
+  createdAt    DateTime @default(now())
+  publishedAt  DateTime?
+
+  sources CivicSource[]
+  votes   CivicVote[]
+
+  @@index([scope, status, publishedAt])
+  @@index([authority])
+  @@index([actorKey])
+}
+
+model CivicSource {
+  id        String   @id @default(cuid())
+  newsId    String
+  news      CivicNews @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  label     EvidenceLabel
+  title     String
+  url       String?
+  createdAt DateTime @default(now())
+
+  @@index([newsId])
+}
+
+// One public judgment per user per item — a verdict AND a required reason.
+model CivicVote {
+  id        String   @id @default(cuid())
+  newsId    String
+  news      CivicNews @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  userId    String
+  verdict   CivicVerdict
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@unique([newsId, userId])
+  @@index([newsId])
+}
+
+// ===========================================================================
+// JUSTICE VAULT — spotlight cases built to be remembered. Facts-only spine,
+// legal-safe wording (state charges/verdicts exactly; never label someone a
+// "killer" unless legally convicted; criticize actions, not identity). Demo data
+// is fictional; real cases require verified public records + legal review.
+// ===========================================================================
+
+enum CaseStatus {
+  ACTIVE
+  UNDER_REVIEW
+  HISTORICAL
+}
+
+model JusticeCase {
+  id                String   @id @default(cuid())
+  victimName        String
+  victimAge         Int?
+  location          String?
+  dateOfIncident    DateTime?
+  caseType          String   // Unsolved | Controversial Verdict | System Failure | …
+  // Two-sentence memory lock — re-graspable in seconds.
+  memoryLockPrimary String   // what happened (one sentence)
+  memoryLockFailure String   // what failed (one sentence)
+  status            CaseStatus @default(ACTIVE)
+  justiceGapScore   Int      @default(0) // 0–100
+  spotlightLevel    Int      @default(0) // 0 normal · 3 = highest ("never forget")
+  // Human-first profile.
+  favoriteActivities String?
+  personalityWords   String[] @default([])
+  whatWasLost        String?
+  anchorPhrases      String[] @default([]) // memory-boost phrases reused everywhere
+  // Structured detail stored as JSON arrays (display-only, no querying needed):
+  timeline  Json @default("[]") // [{date,label,description,scoreTag?,sourceUrl?}]
+  actions   Json @default("[]") // [{actorType,actorName?,description,scoreTag,impactWeight}]
+  questions Json @default("[]") // [{questionText,targetAuthority,status}]
+  flags     Json @default("[]") // [{flag,reason}] contradiction markers
+  sources   Json @default("[]") // [{label,title,url?}]
+  publishState StoryStatus @default(PUBLISHED)
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  publishedAt DateTime?
+
+  @@index([spotlightLevel, publishState])
+  @@index([status])
+}
+
+// The Honor Vault — a permanent, factual record of military service and sacrifice.
+// Counterpart to the Justice Vault. Honor/tribute content: respectful, sourced,
+// no accusations. "Never forget" by design.
+enum HonorCategory {
+  FALLEN       // died in service
+  COMBAT       // Purple Heart, Silver Star, Medal of Honor, etc.
+  LIFESAVING   // saved lives (in service or as a veteran)
+  COMMUNITY    // service to community after uniform
+  LEGACY       // long life, lasting impact
+}
+
+model HonorHero {
+  id                 String   @id @default(cuid())
+  heroName           String
+  rank               String?
+  branch             String?  // Army | Navy | Marines | Air Force | Coast Guard | Space Force
+  category           HonorCategory @default(FALLEN)
+  homeState          String?
+  conflictOrEra      String?  // "Afghanistan", "Vietnam", "WWII", "Peacetime"
+  // Two-sentence memory lock — imprints instantly.
+  memoryLockPrimary  String   // what they did
+  memoryLockSacrifice String  // what they gave / endured
+  serviceSummary     String?  // <=25 words
+  momentOfCourage    String?  // the defining moment
+  legacyImpact       String?  // what they changed / who they helped
+  medals             String[] @default([]) // Purple Heart, Bronze Star, Medal of Honor…
+  memoryPhrases      String[] @default([]) // short sticky phrases
+  chainOfInfluence   String[] @default([]) // unit, mission, community, family, future
+  quotes             Json     @default("[]") // [{quote, attribution}]
+  keyDates           Json     @default("[]") // [{label, date}] for the Never-Forget resurfacing
+  honorScore         Int      @default(0) // DEPRECATED — replaced by Remembrance (candles + tributes)
+  candles            Int      @default(0) // remembrance tokens left at the resting place — these accumulate,
+  coins              Int      @default(0) // never reset, so the memorial grows with every visit.
+  flags              Int      @default(0)
+  stones             Int      @default(0)
+  flowers            Int      @default(0)
+  spotlightLevel     Int      @default(0) // 0 normal · 3 = highest ("never forget")
+  publishState       StoryStatus @default(PUBLISHED)
+  createdBy          String?
+  createdAt          DateTime @default(now())
+  publishedAt        DateTime?
+
+  tributes           HonorTribute[]
+
+  @@index([spotlightLevel, publishState])
+  @@index([category])
+}
+
+// The Tribute Wall — messages of remembrance from family, service members, and
+// community. Moderated: nothing appears on a memorial until approved.
+model HonorTribute {
+  id           String    @id @default(cuid())
+  heroId       String
+  hero         HonorHero @relation(fields: [heroId], references: [id], onDelete: Cascade)
+  displayName  String    @default("Anonymous")
+  relationship String?   // "Daughter", "Fellow soldier", "Neighbor"…
+  message      String
+  status       StoryStatus @default(PENDING_REVIEW)
+  createdAt    DateTime  @default(now())
+  publishedAt  DateTime?
+
+  @@index([heroId, status])
+  @@index([status, createdAt])
+}
+
+// Append-only trail of claim-status changes (who moved it, and why).
+model ClaimStatusEvent {
+  id             String   @id @default(cuid())
+  reportId       String
+  report         CommunityReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  fromStatus     ReportClaimStatus
+  toStatus       ReportClaimStatus
+  rationale      String
+  reviewerUserId String
+  createdAt      DateTime @default(now())
+
+  @@index([reportId])
+}
+
+// AI-surfaced research leads (e.g. from Grok Live Search over X/news/web). These
+// are UNVERIFIED tips for staff triage — never published automatically. A human
+// verifies against primary sources and creates real content the normal way.
+enum LeadStatus {
+  NEW
+  DISMISSED
+}
+
+model Lead {
+  id           String     @id @default(cuid())
+  query        String                       // what was searched
+  jurisdiction String?
+  title        String
+  summary      String
+  citations    Json       @default("[]")    // [{url, title?}] source links the model cited
+  source       String     @default("grok")
+  status       LeadStatus @default(NEW)
+  createdBy    String?
+  createdAt    DateTime   @default(now())
+
+  @@index([status, createdAt])
+}
+
+// Web-push subscriptions for red-flag / breaking-news alerts. One row per
+// browser/device that opted in. No account required — anonymous by endpoint.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// A ledger of completed payments, recorded from verified Stripe webhooks.
+// No card data (Stripe holds that); minimal fields for records/receipts.
+model Donation {
+  id            String   @id @default(cuid())
+  kind          String   @default("donation") // donation | membership
+  amountCents   Int
+  currency      String   @default("usd")
+  stripeSession String   @unique
+  email         String?  // billing email from Stripe, for receipts/thank-yous
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Anonymous whistleblower tips. We store NO identity, NO IP, NO user-agent —
+// only an encrypted message (AES-256-GCM at rest) readable by the small review
+// team. Text-only by design: files are the biggest de-anonymization risk.
+enum TipStatus {
+  NEW
+  REVIEWED
+  ARCHIVED
+}
+
+model WhistleblowerTip {
+  id         String    @id @default(cuid())
+  ciphertext String    // base64(iv + authTag + AES-256-GCM ciphertext)
+  category   String?
+  status     TipStatus @default(NEW)
+  createdAt  DateTime  @default(now())
+
+  @@index([status, createdAt])
+}
+
+// Verified legislative records ingested from a public data source (OpenStates v3).
+// This is factual public-record data only — the source of truth is the API; we
+// cache it so pages are fast and Red Flags can be derived from the documented record.
+model Bill {
+  id                      String   @id @default(cuid())
+  source                  String   @default("openstates") // "openstates" | "legiscan"
+  externalId              String   @unique                // "openstates:ocd-bill/…" | "legiscan:123456"
+  jurisdiction            String                    // "Texas", "United States"
+  session                 String
+  identifier              String                    // "HB 100"
+  title                   String
+  classification          String[] @default([])     // ["bill"], ["resolution"]…
+  subjects                String[] @default([])
+  latestActionDate        String?
+  latestActionDescription String?
+  sponsors                Json     @default("[]")    // [{name, classification, primary}]
+  actions                 Json     @default("[]")    // [{date, description, classification[]}]
+  votes                   Json     @default("[]")    // [{date, motion, result, yes, no, other}]
+  sources                 Json     @default("[]")    // [{url, note}]
+  sourceUrl               String?                    // canonical record URL on the source site
+  redFlags                String[] @default([])      // cached, derived only from the documented record
+  firstSyncedAt           DateTime @default(now())
+  lastSyncedAt            DateTime @default(now())
+
+  @@index([jurisdiction, session])
+  @@index([lastSyncedAt])
+  sponsorLinks BillSponsor[]
+}
+
+// Normalized bill<->sponsor links so we can build an official's LEGISLATIVE RECORD
+// (their sponsored bills) from verified data. Names are attached to documented
+// facts only — never to rumors.
+model BillSponsor {
+  id       String  @id @default(cuid())
+  billId   String
+  bill     Bill    @relation(fields: [billId], references: [id], onDelete: Cascade)
+  name     String
+  nameKey  String              // slugified name for grouping/lookup
+  role     String?
+  primary  Boolean @default(false)
+
+  @@index([nameKey])
+  @@index([billId])
+}

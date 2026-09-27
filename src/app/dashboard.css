@@ -1,0 +1,204 @@
+/* Community Brief dashboard styles — ported from the MVP front-end to preserve
+   the approved mobile-first design (spec §35 accessibility, §36 design direction).
+   Kept close to source; fonts loaded from Google Fonts (swap to next/font later). */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Libre+Franklin:wght@600;700;800&display=swap');
+:root{font-family:'DM Sans',sans-serif;color:#172632;background:#f5f4ef;font-synthesis:none;--navy:#102f3b;--teal:#0d6b68;--red:#d64b3c;--line:#d9ddd8;--cream:#f5f4ef}
+*{box-sizing:border-box}
+body{margin:0}
+button,input{font:inherit}
+button,a{cursor:pointer}
+header{height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 34px;position:fixed;inset:0 0 auto;z-index:20}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--navy);font:800 19px 'Libre Franklin'}
+.brand>span span{color:var(--red)}
+.mark{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;background:var(--red);color:#fff;font-size:22px}
+nav{display:flex;gap:32px;margin-left:70px;height:100%;align-items:center}
+nav a{height:100%;display:grid;place-items:center;font-weight:600;font-size:14px;color:#56636a;position:relative}
+nav .active{color:var(--teal)}
+nav .active:after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--teal)}
+.actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.icon{border:0;background:transparent;padding:9px;color:#56636a;position:relative}
+.icon svg{width:19px}
+.icon i{width:6px;height:6px;background:var(--red);border-radius:50%;position:absolute;right:7px;top:7px}
+.avatar{border:0;width:36px;height:36px;background:#dceae7;color:var(--teal);border-radius:50%;font-weight:700}
+.trust{position:fixed;top:70px;left:0;right:0;height:32px;background:#e9f1ee;color:#46635f;z-index:19;font-size:11px;display:flex;align-items:center;justify-content:center;gap:8px}
+.trust svg{width:14px}
+.trust span{height:12px;width:1px;background:#9fb3ae;margin:0 8px}
+aside{position:fixed;top:102px;bottom:0;left:0;width:270px;background:#fff;border-right:1px solid var(--line);padding:26px 20px;overflow:auto;z-index:10}
+.side-label,.kicker{font-size:10px;letter-spacing:1.6px;font-weight:800;color:#748188;margin:0 0 10px}
+.place{width:100%;padding:11px 12px;display:flex;justify-content:space-between;align-items:center;background:#f6f7f4;border:1px solid var(--line);border-radius:7px}
+.place span{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px}
+.place svg{width:16px;color:var(--teal)}
+.navgroup{margin:20px 0}
+.navgroup button,.navgroup a{border:0;background:none;width:100%;padding:10px 11px;display:flex;gap:11px;align-items:center;border-radius:6px;color:#4c5d63;font-weight:600;font-size:13px;text-align:left;text-decoration:none}
+.navgroup button svg,.navgroup a svg{width:17px}
+.navgroup .selected{background:#e8f0ed;color:var(--teal)}
+.records-card{background:var(--navy);color:#fff;padding:18px;border-radius:8px}
+.records-card>svg{color:#6ec4b8;width:21px}
+.records-card b{display:block;margin:8px 0;font-size:14px}
+.records-card p{font-size:11px;line-height:1.5;color:#bfd0d3}
+.records-card button{border:0;background:#fff;color:var(--navy);font-weight:700;width:100%;padding:9px;border-radius:5px}
+.method{display:flex;gap:10px;margin-top:22px}
+.method>svg{width:18px;color:var(--teal);flex:none}
+.method b{font-size:12px}
+.method p,.method a{font-size:10px;line-height:1.5}
+.method p{color:#738086}
+.method a{color:var(--teal);font-weight:700}
+main{margin-left:270px;padding:142px 42px 60px;max-width:1400px}
+.welcome{display:flex;justify-content:space-between;align-items:end}
+.welcome h1{font:800 29px 'Libre Franklin';margin:0;color:var(--navy)}
+.welcome>div>p:last-child{margin:8px 0 0;color:#637078;font-size:14px}
+.outline{border:1px solid var(--line);background:#fff;border-radius:6px;padding:9px 13px;display:flex;gap:7px;align-items:center;color:#46575e;font-weight:600;font-size:12px}
+.outline svg{width:15px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);margin:28px 0 36px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.stats div{padding:17px 20px;border-right:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;align-items:end}
+.stats div:last-child{border:0}
+.stats span{grid-column:1/-1;font-size:9px;letter-spacing:1px;color:#7b858a;font-weight:800}
+.stats b{font:800 25px 'Libre Franklin';color:var(--navy);margin-top:7px}
+.stats small{font-size:10px;color:#6f7d82;padding:0 0 4px 9px}
+.section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:17px}
+.section-head h2{font:800 21px 'Libre Franklin';margin:0;color:var(--navy)}
+.search{display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:6px;padding:0 10px}
+.search svg{width:15px;color:#819095}
+.search input{border:0;outline:0;background:transparent;padding:9px;width:180px;font-size:12px}
+.content{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,.75fr);gap:24px}
+.feed{display:grid;gap:14px}
+.story{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;display:grid;grid-template-columns:160px 1fr;cursor:pointer;transition:.2s}
+.story:hover{box-shadow:0 8px 25px #17313b15;transform:translateY(-1px)}
+.story:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.story-art{display:grid;place-items:center}
+.story-art svg{width:44px;height:44px;color:#ffffffb8}
+.story-body{padding:17px 19px}
+.meta{display:flex;justify-content:space-between;font-size:9px;letter-spacing:1.1px;color:#78858a;font-weight:800}
+.story h3{font:700 16px 'Libre Franklin';margin:8px 0;color:var(--navy);line-height:1.3}
+.story p{font-size:12px;line-height:1.55;color:#647279;margin:0}
+.story-foot{display:flex;align-items:center;gap:13px;margin-top:13px;font-size:10px;color:#718086}
+.story-foot button{margin-left:auto;border:0;background:none;color:var(--teal);font-weight:700;font-size:11px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border-radius:4px;background:#e3f1eb;color:#277157;font-size:9px;font-weight:800}
+.badge.under-review{background:#fff1d5;color:#926318}
+.badge.disputed{background:#fee4e2;color:#9d3b33}
+.badge.official-statement{background:#e6edf5;color:#375e7a}
+.panel{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px;margin-bottom:16px}
+.panel-title{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800}
+.panel-title span{display:flex;align-items:center;gap:7px}
+.panel-title svg{width:17px;color:var(--teal)}
+.panel-title small{font-weight:500;color:#859197}
+.donut{width:125px;height:125px;border-radius:50%;margin:22px auto;background:conic-gradient(var(--teal) 0 84%,#e4e7e3 84%);display:grid;place-items:center}
+.donut:before{content:'';position:absolute;width:91px;height:91px;background:white;border-radius:50%}
+.donut div{position:relative;display:grid;text-align:center}
+.donut b{font:800 24px 'Libre Franklin';color:var(--navy)}
+.donut small{font-size:9px;color:#7a878c}
+.panel ul{padding:0;list-style:none}
+.panel li{font-size:10px;color:#637177;padding:5px 0;display:flex;align-items:center}
+.panel li i{width:7px;height:7px;border-radius:50%;margin-right:8px}
+.panel li b{margin-left:auto;color:#293b42}
+.green{background:var(--teal)}
+.amber{background:#d49a34}
+.gray{background:#bac1be}
+.panel>a{display:block;text-align:center;color:var(--teal);font-weight:700;font-size:11px;border-top:1px solid var(--line);padding-top:12px}
+.action h3{font:700 15px 'Libre Franklin';margin:0 0 12px}
+.action button{width:100%;border:1px solid var(--line);background:#fff;border-radius:6px;padding:10px;display:flex;gap:9px;text-align:left;margin-top:8px}
+.action button svg{width:18px;color:var(--teal);flex:none}
+.action button span{display:grid}
+.action button b{font-size:10px;color:#31464d}
+.action button small{font-size:8px;color:#829096;margin-top:2px}
+.empty{text-align:center;background:white;border:1px solid var(--line);padding:50px}
+.empty svg{color:#839296}
+.modal-wrap{position:fixed;inset:0;background:#0d232bcc;z-index:40;display:grid;place-items:center;padding:20px}
+.modal{width:min(590px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:10px;padding:32px;position:relative}
+.close-modal,.close{position:absolute;right:15px;top:15px;border:0;background:none}
+.modal h2{font:800 24px 'Libre Franklin';color:var(--navy);line-height:1.25}
+.modal-summary{font-size:13px;color:#5e6d73;line-height:1.6;border-bottom:1px solid var(--line);padding-bottom:18px}
+.modal h3{font-size:13px}
+.timeline>div{display:grid;grid-template-columns:44px 13px 1fr;gap:11px;min-height:55px}
+.timeline time{font-size:10px;color:#718087}
+.timeline i{width:9px;height:9px;border:2px solid var(--teal);border-radius:50%;position:relative}
+.timeline i:after{content:'';position:absolute;width:1px;height:46px;background:#b7cbc5;left:2px;top:9px}
+.timeline>div:last-child i:after{display:none}
+.timeline span{display:grid}
+.timeline b{font-size:11px}
+.timeline small{font-size:9px;color:#7c898e;margin-top:3px}
+.notice{display:flex;gap:10px;background:#eef5f2;padding:12px;color:#3e5c57;font-size:10px;line-height:1.5}
+.notice svg{width:18px;flex:none;color:var(--teal)}
+.notice p{margin:0}
+.primary{width:100%;border:0;background:var(--teal);color:white;padding:12px;margin-top:16px;border-radius:5px;font-weight:700}
+.mobile{display:none}
+.scrim{position:fixed;inset:0;background:#0d232b66;z-index:45}
+@media(max-width:900px){
+  nav{display:none}
+  header{padding:0 14px}
+  .mobile{display:block}
+  .brand{font-size:15px}
+  .actions .icon{display:none}
+  aside{transform:translateX(-100%);transition:.25s;top:0;z-index:50;padding-top:60px}
+  aside.open{transform:translateX(0)}
+  main{margin:0;padding:130px 18px 40px}
+  .stats{grid-template-columns:1fr 1fr}
+  .stats div:nth-child(2){border-right:0}
+  .stats div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .content{grid-template-columns:1fr}
+  .welcome{align-items:start}
+  .welcome .outline{display:none}
+  .story{grid-template-columns:105px 1fr}
+  .right{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .modal{padding:24px}
+  .trust{font-size:9px}
+}
+@media(max-width:600px){
+  .trust span,.trust span+*{display:none}
+  .welcome h1{font-size:23px}
+  .stats b{font-size:20px}
+  .section-head{display:block}
+  .search{margin-top:14px}
+  .search input{width:100%}
+  .story{grid-template-columns:1fr}
+  .story-art{height:80px}
+  .story-body{padding:15px}
+  .story-foot{flex-wrap:wrap}
+  .story-foot button{width:100%;text-align:left;margin:0}
+  .right{grid-template-columns:1fr}
+  .modal-wrap{padding:0;align-items:end}
+  .modal{border-radius:14px 14px 0 0;max-height:93vh}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* -------- Plain-language pages (Elections, simple screens) — big & clear -------- */
+.simple{max-width:1000px;margin:0 auto;padding:90px 20px 60px}
+.simple .back{display:inline-block;font-weight:700;color:var(--teal);font-size:17px;margin-bottom:14px;text-decoration:none}
+.big-title{font:800 34px 'Libre Franklin';color:var(--navy);line-height:1.15;margin:0 0 6px}
+.big-sub{font-size:18px;color:#3e4c52;margin:2px 0 0}
+.vote-banner{display:flex;gap:16px;align-items:center;background:#e9f1ee;border:2px solid var(--teal);border-radius:14px;padding:18px 20px;margin-bottom:18px}
+.vote-emoji{font-size:44px;line-height:1}
+.explain{font-size:18px;line-height:1.6;color:#38454b;background:#fbfaf6;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.explain.small{font-size:15px}
+.race{margin-top:30px}
+.race-title{font:800 24px 'Libre Franklin';color:var(--navy);border-bottom:3px solid var(--teal);padding-bottom:8px;margin:0 0 4px}
+.race-desc{font-size:16px;color:#5e6d73;margin:6px 0 14px}
+.candidates{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.cand{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}
+.cand-photo{width:70px;height:70px;border-radius:50%;display:grid;place-items:center;color:#fff;font:800 26px 'Libre Franklin'}
+.cand-name{font:800 22px 'Libre Franklin';color:var(--navy);margin:12px 0 2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.chip{font-size:12px;font-weight:800;background:#e6edf5;color:#375e7a;border-radius:999px;padding:3px 10px}
+.cand-party{font-size:15px;color:#6f7d82;margin:0 0 8px;font-weight:600}
+.cand-bio{font-size:16px;line-height:1.55;color:#45535a;margin:0 0 14px}
+.stance{border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.stance.for{background:#e3f1eb}
+.stance.against{background:#fdecea}
+.stance-head{font-weight:800;font-size:16px;margin:0 0 6px}
+.stance.for .stance-head{color:#1c7c46}
+.stance.against .stance-head{color:#b3261e}
+.stance ul,.proscon ul{margin:0;padding-left:20px}
+.stance li{font-size:16px;line-height:1.5;margin-bottom:6px;color:#33444a}
+.proscon{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+.pc-head{font-weight:800;font-size:15px;margin:0 0 4px}
+.pc-head.good{color:#1c7c46}
+.pc-head.bad{color:#a9631b}
+.proscon li{font-size:15px;line-height:1.45;margin-bottom:5px;color:#45535a}
+.empty-simple{background:#fff;border:1px solid var(--line);border-radius:12px;padding:34px;font-size:18px;line-height:1.6;color:#45535a}
+/* Home "important right now" banner */
+.timely{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#102f3b;color:#fff;border-radius:12px;padding:16px 20px;margin:0 0 8px}
+.timely .t-left{display:flex;gap:14px;align-items:center}
+.timely .t-emoji{font-size:34px;line-height:1}
+.timely b{font-size:18px;display:block}
+.timely p{margin:2px 0 0;font-size:14px;color:#cfe0e3}
+.timely a{background:#fff;color:var(--navy);font-weight:800;padding:11px 16px;border-radius:8px;text-decoration:none;white-space:nowrap;font-size:15px}
+@media(max-width:600px){.big-title{font-size:27px}.proscon{grid-template-columns:1fr}.timely a{width:100%;text-align:center}}

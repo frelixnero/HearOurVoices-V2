@@ -1,0 +1,14 @@
+/* Base/global rules that must not conflict with the dashboard design system.
+   Component/page styling lives in dashboard.css (spec §36). */
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  background: var(--navy, #102f3b);
+  color: #fff;
+  padding: 0.5rem 0.75rem;
+  z-index: 100;
+}
+.skip-link:focus {
+  left: 0;
+}
