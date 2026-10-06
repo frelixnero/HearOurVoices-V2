@@ -31,7 +31,17 @@ export async function getTimelyElection() {
 export async function listElections() {
   return prisma.election.findMany({
     orderBy: { electionDate: 'asc' },
-    select: { id: true, name: true, electionDate: true, status: true, type: true },
+    select: {
+      id: true,
+      name: true,
+      electionDate: true,
+      registrationDeadline: true,
+      earlyVotingStart: true,
+      earlyVotingEnd: true,
+      officialPortalUrl: true,
+      status: true,
+      type: true,
+    },
   });
 }
 

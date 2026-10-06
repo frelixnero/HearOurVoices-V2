@@ -6,6 +6,8 @@ import { listElections, getElectionGuide } from '@/lib/elections/service';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 
+import { VoterChecklist } from '@/components/elections/VoterChecklist';
+
 export const metadata: Metadata = {
   title: 'See who is running — HearOURVOICES',
   description: 'A plain and simple guide to the people running for office: what they want, and what they are for and against.',
@@ -37,20 +39,18 @@ export default async function ElectionsPage() {
     );
   }
 
-  const today = new Date();
-  const days = Math.max(0, Math.ceil((guide.electionDate.getTime() - today.getTime()) / 86400000));
-
   return (
     <>
     <SiteHeader />
     <main className="simple">
-      <div className="vote-banner">
-        <span className="vote-emoji" aria-hidden="true">🗳️</span>
-        <div>
-          <h1 className="big-title" style={{ margin: 0 }}>{guide.name}</h1>
-          <p className="big-sub">Voting day is {dateLabel(guide.electionDate)} — that is {days} day{days === 1 ? '' : 's'} away.</p>
-        </div>
-      </div>
+      <VoterChecklist
+        electionName={guide.name}
+        electionDate={guide.electionDate}
+        registrationDeadline={guide.registrationDeadline}
+        earlyVotingStart={guide.earlyVotingStart}
+        earlyVotingEnd={guide.earlyVotingEnd}
+        officialPortalUrl={guide.officialPortalUrl}
+      />
 
       <p className="explain">
         Below is every person running. We show what each one wants to do, and what they are

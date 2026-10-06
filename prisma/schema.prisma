@@ -1264,14 +1264,18 @@ model InvestigationFinding {
 // ===========================================================================
 
 model Election {
-  id             String   @id @default(cuid())
-  name           String
-  jurisdictionId String?
-  electionDate   DateTime
-  type           String // general|primary|special|recall
-  status         String   @default("upcoming") // upcoming|active|past
-  description    String?
-  createdAt      DateTime @default(now())
+  id                   String    @id @default(cuid())
+  name                 String
+  jurisdictionId       String?
+  electionDate         DateTime
+  registrationDeadline DateTime?
+  earlyVotingStart     DateTime?
+  earlyVotingEnd       DateTime?
+  officialPortalUrl    String?
+  type                 String // general|primary|special|recall
+  status               String   @default("upcoming") // upcoming|active|past
+  description          String?
+  createdAt            DateTime @default(now())
 
   races          Race[]
 

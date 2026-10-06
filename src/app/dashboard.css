@@ -202,3 +202,72 @@ main{margin-left:270px;padding:142px 42px 60px;max-width:1400px}
 .timely p{margin:2px 0 0;font-size:14px;color:#cfe0e3}
 .timely a{background:#fff;color:var(--navy);font-weight:800;padding:11px 16px;border-radius:8px;text-decoration:none;white-space:nowrap;font-size:15px}
 @media(max-width:600px){.big-title{font-size:27px}.proscon{grid-template-columns:1fr}.timely a{width:100%;text-align:center}}
+
+/* ==========================================================================
+   VOTER UTILITY & CIVIC CHECKLIST (Nonpartisan Civic Action Flow)
+   ========================================================================== */
+.voter-utility{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px 28px;margin-bottom:24px;box-shadow:0 4px 18px rgba(16,47,59,0.04)}
+.vu-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;border-bottom:1px solid #eef1ed;padding-bottom:20px;margin-bottom:20px}
+.vu-title-block{flex:1;min-width:280px}
+.vu-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--teal);background:#e4f2ee;padding:4px 11px;border-radius:999px;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px}
+.vu-tag-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block}
+.vu-main-title{font:800 32px 'Libre Franklin',sans-serif;color:var(--navy);line-height:1.2;margin:0 0 6px}
+.vu-sub{font-size:16px;line-height:1.55;color:#4f5f66;margin:0;max-width:680px}
+.vu-countdown-pill{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#102f3b;color:#fff;border-radius:14px;padding:14px 22px;min-width:130px;text-align:center}
+.vu-countdown-number{font:800 36px 'Libre Franklin',sans-serif;line-height:1;color:#67e8d5}
+.vu-countdown-label{font-size:12px;font-weight:600;color:#c9d9dc;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px}
+
+/* Key Dates Timeline Grid */
+.vu-dates-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-bottom:24px}
+.vu-date-card{display:flex;align-items:flex-start;gap:14px;background:#f8faf8;border:1px solid #e2e7e3;border-radius:12px;padding:14px 16px}
+.vu-date-card.highlight{background:#eef7f4;border-color:#b9ded5}
+.vu-date-icon{font-size:26px;line-height:1;margin-top:2px}
+.vu-date-body{display:flex;flex-direction:column;gap:3px}
+.vu-date-title{font-size:12px;font-weight:800;color:#60737a;text-transform:uppercase;letter-spacing:0.4px}
+.vu-date-value{font:700 16px 'Libre Franklin',sans-serif;color:var(--navy)}
+.vu-date-badge{font-size:12px;font-weight:600;color:var(--teal)}
+
+/* Decision Flow Tabs & Panels */
+.vu-decision-flow{background:#fafbfa;border:1px solid #e5eae6;border-radius:14px;overflow:hidden;margin-bottom:20px}
+.vu-tabs{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #e2e8e4;background:#f0f4f1}
+.vu-tab-btn{background:transparent;border:0;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:background 0.15s,color 0.15s;border-bottom:3px solid transparent}
+.vu-tab-btn:hover{background:#e7ede9}
+.vu-tab-btn.active{background:#fff;border-bottom-color:var(--teal)}
+.vu-step-num{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;color:#70848c}
+.vu-tab-btn.active .vu-step-num{color:var(--teal)}
+.vu-step-text{font:700 14px 'Libre Franklin',sans-serif;color:var(--navy)}
+
+.vu-panel{padding:22px 24px;background:#fff}
+.vu-panel-content h3{font:800 19px 'Libre Franklin',sans-serif;color:var(--navy);margin:0 0 8px}
+.vu-panel-content p{font-size:15px;line-height:1.55;color:#45555c;margin:0 0 16px}
+.vu-check-list{margin:0 0 18px;padding-left:20px;color:#3f5159;font-size:15px;line-height:1.6}
+.vu-check-list li{margin-bottom:4px}
+
+.vu-methods-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:0 0 18px}
+.vu-method-card{background:#f8faf8;border:1px solid #e1e7e2;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:5px}
+.vu-method-card b{font-size:14px;color:var(--navy)}
+.vu-method-card span{font-size:13px;color:#54666d;line-height:1.4}
+
+.vu-hotlines-box{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;background:#f3f7f5;border:1px solid #dbe6e0;border-radius:10px;padding:14px 16px;margin-bottom:18px}
+.vu-hotline-item{display:flex;flex-direction:column;gap:2px}
+.vu-hotline-lang{font-size:12px;font-weight:700;color:#52676f}
+.vu-hotline-num{font:700 14px 'Libre Franklin',sans-serif;color:var(--teal);text-decoration:none}
+.vu-hotline-num:hover{text-decoration:underline}
+
+.vu-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.vu-primary-btn{display:inline-flex;align-items:center;background:var(--teal);color:#fff;font-weight:700;font-size:14px;padding:10px 18px;border-radius:8px;text-decoration:none;transition:background 0.15s}
+.vu-primary-btn:hover{background:#0a5754}
+.vu-secondary-btn{display:inline-flex;align-items:center;background:#fff;border:1px solid #c2cdc5;color:var(--navy);font-weight:700;font-size:14px;padding:9px 16px;border-radius:8px;text-decoration:none;transition:border-color 0.15s,background 0.15s}
+.vu-secondary-btn:hover{border-color:var(--navy);background:#f6f8f6}
+
+/* Neutrality Notice */
+.vu-neutrality-notice{display:flex;align-items:center;gap:12px;background:#fdfdfb;border:1px dashed #ced7cf;border-radius:10px;padding:12px 16px}
+.vu-notice-icon{font-size:20px;line-height:1}
+.vu-neutrality-notice p{font-size:13px;line-height:1.5;color:#5a6b72;margin:0}
+
+@media(max-width:768px){
+  .voter-utility{padding:20px 18px}
+  .vu-tabs{grid-template-columns:1fr}
+  .vu-tab-btn{flex-direction:row;justify-content:flex-start;gap:10px;padding:10px 14px}
+  .vu-actions a{width:100%;justify-content:center;text-align:center}
+}

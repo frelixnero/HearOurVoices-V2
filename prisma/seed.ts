@@ -255,14 +255,23 @@ async function main() {
 
   console.log('Seeding a fictional upcoming election with candidates (§18, §44)…');
   const electionDate = new Date(Date.now() + 45 * 24 * 3600 * 1000); // ~45 days out
+  const registrationDeadline = new Date(Date.now() + 15 * 24 * 3600 * 1000); // ~15 days out
+  const earlyVotingStart = new Date(Date.now() + 30 * 24 * 3600 * 1000); // ~30 days out
+  const earlyVotingEnd = new Date(Date.now() + 43 * 24 * 3600 * 1000); // ~43 days out
+  const officialPortalUrl = 'https://vote.gov';
+
   const election = await prisma.election.upsert({
     where: { id: 'seed-election-2026' },
-    update: { electionDate, status: 'upcoming' },
+    update: { electionDate, registrationDeadline, earlyVotingStart, earlyVotingEnd, officialPortalUrl, status: 'upcoming' },
     create: {
       id: 'seed-election-2026',
       name: 'Riverbend City Election',
       jurisdictionId: riverbend.id,
       electionDate,
+      registrationDeadline,
+      earlyVotingStart,
+      earlyVotingEnd,
+      officialPortalUrl,
       type: 'general',
       status: 'upcoming',
       description: 'Voters will choose the next Mayor of Riverbend.',
