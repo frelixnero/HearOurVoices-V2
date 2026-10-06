@@ -2,14 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "prisma generate && DATABASE_URL=\"${DATABASE_URL_UNPOOLED:-$DATABASE_URL}\" prisma migrate deploy && next build",
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "hearourvoices.net" }],
-      "destination": "https://hearourvoices.app/:path*",
-      "permanent": true
-    }
-  ],
   "crons": [
     { "path": "/api/cron/legislation", "schedule": "0 9 * * *" }
   ]

@@ -5,12 +5,12 @@
 // in dev, Next's HMR needs 'unsafe-eval'. Tighten with nonces before public launch.
 const isDev = process.env.NODE_ENV !== 'production';
 const csp = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob:",
-  "connect-src 'self'",
+  "default-src 'self' https://hearourvoices.net https://hearourvoices.app",
+  `script-src 'self' 'unsafe-inline' https://hearourvoices.net https://hearourvoices.app${isDev ? " 'unsafe-eval'" : ''}`,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hearourvoices.net https://hearourvoices.app",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https://hearourvoices.net https://hearourvoices.app",
+  "connect-src 'self' https://hearourvoices.net https://hearourvoices.app",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
