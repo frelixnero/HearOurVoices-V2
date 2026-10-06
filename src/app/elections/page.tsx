@@ -25,7 +25,7 @@ export default async function ElectionsPage() {
 
   if (!guide) {
     return (
-      <>
+      <div style={{ background: '#f5f4ef', minHeight: '100vh', color: '#172632' }}>
         <SiteHeader />
         <main className="simple">
           <h1 className="big-title">See who is running</h1>
@@ -35,14 +35,14 @@ export default async function ElectionsPage() {
           </div>
         </main>
         <SiteFooter />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-    <SiteHeader />
-    <main className="simple">
+    <div style={{ background: '#f5f4ef', minHeight: '100vh', color: '#172632' }}>
+      <SiteHeader />
+      <main className="simple">
       <VoterChecklist
         electionName={guide.name}
         electionDate={guide.electionDate}
@@ -118,6 +118,6 @@ export default async function ElectionsPage() {
       </p>
     </main>
     <SiteFooter />
-    </>
+    </div>
   );
 }

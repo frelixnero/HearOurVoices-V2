@@ -8,15 +8,20 @@
   --red:#e63329; --red-d:#c62a22; --line:#e7e9ee; --line-d:#26314a;
   --text:#1a2233; --muted:#5c6678; --muted-d:#9aa6bd; --cream:#f6f7f9; --white:#fff;
   font-family:'Inter',system-ui,sans-serif; color:var(--text); line-height:1.55; -webkit-font-smoothing:antialiased;
+  background:var(--ink);
+  min-height:100vh;
+  width:100%;
+  overflow-x:hidden;
 }
 .hov-root *{box-sizing:border-box}
 .hov-root img{max-width:100%}
 .hov-root a{text-decoration:none;color:inherit}
 .hov-wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+.hov-page{background:var(--ink);color:#fff;min-height:calc(100vh - 70px);padding:32px 0 70px;width:100%}
 
 /* Buttons */
-.hb{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:700;font-size:15px;
-  border-radius:9px;padding:13px 22px;border:2px solid transparent;cursor:pointer;transition:transform .12s,background .15s,box-shadow .15s;white-space:nowrap}
+.hb{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:700;font-size:14px;
+  border-radius:9px;padding:10px 18px;border:2px solid transparent;cursor:pointer;transition:transform .12s,background .15s,box-shadow .15s;white-space:nowrap}
 .hb:hover{transform:translateY(-1px)}
 .hb-red{background:var(--red);color:#fff}
 .hb-red:hover{background:var(--red-d);box-shadow:0 10px 26px #e6332944}
@@ -27,12 +32,12 @@
 .hb-lg{padding:15px 28px;font-size:16px}
 
 /* ---------------- Top navigation ---------------- */
-.hov-nav{position:sticky;top:0;z-index:40;background:var(--ink);border-bottom:1px solid #1a2336}
-.hov-nav-in{display:flex;align-items:center;gap:20px;padding:16px 28px;max-width:1180px;margin:0 auto}
-.hov-links{display:flex;gap:28px;margin-left:34px}
-.hov-links a{color:#cfd6e4;font-weight:600;font-size:15px}
+.hov-nav{position:sticky;top:0;z-index:40;background:var(--ink);border-bottom:1px solid #1a2336;width:100%;overflow-x:clip}
+.hov-nav-in{display:flex;align-items:center;gap:14px;padding:12px 24px;max-width:1440px;margin:0 auto;width:100%}
+.hov-links{display:flex;gap:14px;margin-left:18px;align-items:center;flex-wrap:wrap}
+.hov-links a{color:#cfd6e4;font-weight:600;font-size:13.5px;white-space:nowrap;transition:color .15s}
 .hov-links a:hover,.hov-links a.on{color:#fff}
-.hov-nav-cta{margin-left:auto;display:flex;gap:12px;align-items:center}
+.hov-nav-cta{margin-left:auto;display:flex;gap:10px;align-items:center;flex-shrink:0}
 .hov-burger{margin-left:auto;display:none;background:none;border:0;flex-direction:column;gap:5px;padding:8px;cursor:pointer;list-style:none}
 .hov-burger::-webkit-details-marker{display:none}
 .hov-burger span{width:24px;height:2.5px;background:#fff;border-radius:2px}
@@ -40,6 +45,12 @@
 .hov-mobile[open]{position:static}
 .hov-mobile-panel{position:absolute;left:0;right:0;top:100%;background:var(--ink);border-bottom:1px solid #1a2336;padding:16px 28px;display:flex;flex-direction:column;gap:14px}
 .hov-mobile-panel a{color:#cfd6e4;font-weight:600}
+
+@media(max-width:1200px){
+  .hov-links{display:none}
+  .hov-burger{display:flex}
+  .hov-mobile{display:block}
+}
 
 /* ---------------- Logo ---------------- */
 .hov-logo{display:inline-flex;align-items:center;gap:11px;font-weight:800;font-size:22px;letter-spacing:-.4px}
@@ -417,7 +428,13 @@
 .hov-flagbar .flag-badge{font-weight:800;color:#ffb454;flex-shrink:0}
 .hov-flagbar .flag-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .hov-flagbar .flag-go{color:#ffb454;font-weight:700;flex-shrink:0}
-@media(max-width:640px){.hov-alert-go,.hov-flagbar .flag-go{display:none}.hov-alertbar,.hov-flagbar{padding-left:14px;padding-right:14px}}
+.hov-election-banner{display:flex;align-items:center;gap:14px;padding:12px 24px;background:linear-gradient(90deg,#0e2c31,#134346);border-bottom:1px solid #1f6468;text-decoration:none;color:#fff;font-size:14.5px;transition:background .15s}
+.hov-election-banner:hover{background:linear-gradient(90deg,#113d42,#185256)}
+.hov-election-pill{display:inline-flex;align-items:center;gap:6px;font:800 11.5px 'Inter';letter-spacing:1px;color:#a3f3df;background:#0b2426;border:1px solid #237873;border-radius:20px;padding:3px 10px;flex-shrink:0}
+.hov-election-title{color:#e6faf5;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hov-election-title strong{color:#fff}
+.hov-election-go{color:#67e8d5;font-weight:700;flex-shrink:0}
+@media(max-width:640px){.hov-alert-go,.hov-flagbar .flag-go,.hov-election-go{display:none}.hov-alertbar,.hov-flagbar,.hov-election-banner{padding-left:14px;padding-right:14px}}
 
 /* Plain-language news module + what happens next */
 .nw-module{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#141b2b;border:1px solid #26314a;border-radius:10px;padding:10px 14px;margin-bottom:14px}

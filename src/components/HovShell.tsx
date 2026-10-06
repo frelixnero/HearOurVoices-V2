@@ -14,6 +14,7 @@ export function HovShell({ active, children }: { active?: string; children: Reac
           <Link href="/" aria-label="hearOURvoices home"><HovLogo /></Link>
           <div className="hov-links" role="navigation" aria-label="Primary">
             <Link href="/" className={on('home')}>Home</Link>
+            <Link href="/elections" className={on('elections')}>Elections</Link>
             <Link href="/news" className={on('news')}>Civic News</Link>
             <Link href="/states" className={on('states')}>My State</Link>
             <Link href="/bills" className={on('bills')}>Bills</Link>
@@ -35,6 +36,7 @@ export function HovShell({ active, children }: { active?: string; children: Reac
           <details className="hov-mobile">
             <summary className="hov-burger" aria-label="Menu"><span /><span /><span /></summary>
             <div className="hov-mobile-panel">
+              <Link href="/elections">Elections &amp; Voting Guide</Link>
               <Link href="/news">Civic News</Link>
               <Link href="/states">My State</Link>
               <Link href="/bills">Bills</Link>
@@ -69,7 +71,7 @@ export function HovShell({ active, children }: { active?: string; children: Reac
             </div>
           </div>
           <div className="hov-fcol"><h4>Platform</h4>
-            <Link href="/news">Civic News</Link><Link href="/states">My State</Link><Link href="/bills">Bills</Link><Link href="/officials">Officials</Link><Link href="/red-flags">Red Flags</Link><Link href="/vault">Justice Vault</Link><Link href="/honor">Honor Vault</Link>
+            <Link href="/elections">Elections &amp; Voting</Link><Link href="/news">Civic News</Link><Link href="/states">My State</Link><Link href="/bills">Bills</Link><Link href="/officials">Officials</Link><Link href="/red-flags">Red Flags</Link><Link href="/vault">Justice Vault</Link><Link href="/honor">Honor Vault</Link>
             <Link href="/stories">Stories</Link><Link href="/reports">Reports</Link>
             {rumors && <Link href="/rumors">Rumors</Link>}
             <Link href="/topics">Topics</Link><Link href="/community">Community</Link>

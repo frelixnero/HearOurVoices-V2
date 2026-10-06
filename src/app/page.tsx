@@ -11,6 +11,7 @@ import { PushOptIn } from '@/components/PushOptIn';
 import { rumorsEnabled } from '@/lib/flags';
 import { listNews } from '@/lib/civic/service';
 import { SCOPE_META, detectRedFlags, type CivicScope } from '@/lib/civic/labels';
+import { getTimelyElection } from '@/lib/elections/service';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,8 @@ export default async function Landing() {
   let items: Awaited<ReturnType<typeof listNews>>['items'] = [];
   try { ({ items } = await listNews({ take: 15 })); } catch { items = []; }
   const news = items.slice(0, 3);
+  let election: Awaited<ReturnType<typeof getTimelyElection>> = null;
+  try { election = await getTimelyElection(); } catch { election = null; }
 
   // Breaking alert: the highest-impact recent civic action — politics/money is
   // inherent to civic news — shown as the first thing on the page.
@@ -53,6 +56,7 @@ export default async function Landing() {
           <Link href="/" aria-label="hearOURvoices home"><HovLogo /></Link>
           <div className="hov-links" role="navigation" aria-label="Primary">
             <Link href="/" className="on">Home</Link>
+            <Link href="/elections">Elections</Link>
             <Link href="/news">Civic News</Link>
             <Link href="/states">My State</Link>
             <Link href="/bills">Bills</Link>
@@ -71,6 +75,8 @@ export default async function Landing() {
           <details className="hov-mobile">
             <summary className="hov-burger" aria-label="Menu"><span /><span /><span /></summary>
             <div className="hov-mobile-panel">
+              <Link href="/elections">🗳️ Elections &amp; Voting Guide</Link>
+              <Link href="/news">Civic News</Link>
               <Link href="/stories">Stories</Link>
               <Link href="/topics">Topics</Link>
               <Link href="/resources">Resources</Link>
@@ -81,6 +87,17 @@ export default async function Landing() {
           </details>
         </div>
       </div>
+
+      {/* UPCOMING ELECTION BANNER */}
+      {election && (
+        <Link href="/elections" className="hov-election-banner" aria-label="Upcoming election and voter guide">
+          <span className="hov-election-pill">🗳️ ELECTION GUIDE</span>
+          <span className="hov-election-title">
+            <strong>{election.name}</strong> is in {election.daysAway} days. Check voter registration &amp; see candidates
+          </span>
+          <span className="hov-election-go">See Who&apos;s Running →</span>
+        </Link>
+      )}
 
       {/* BREAKING / RED-FLAG ALERTS — first thing visitors see */}
       {alert && (
