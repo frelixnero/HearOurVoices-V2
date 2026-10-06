@@ -17,8 +17,13 @@ jobs:
       - run: npm ci
       - name: Generate Prisma client
         run: npm run db:generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Validate Prisma schema
         run: npx prisma validate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests
