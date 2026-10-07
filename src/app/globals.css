@@ -1,8 +1,8 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #0b1017;
-  color: #fff;
+  background: #f5f4ef;
+  color: #172632;
   overflow-x: hidden;
   min-height: 100vh;
 }
@@ -11,7 +11,7 @@ html, body {
   position: absolute;
   left: -999px;
   top: 0;
-  background: var(--navy, #102f3b);
+  background: var(--teal, #0d6b68);
   color: #fff;
   padding: 0.5rem 0.75rem;
   z-index: 100;
