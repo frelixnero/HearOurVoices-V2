@@ -27,23 +27,24 @@
 .hb-red:hover{background:var(--red-d);box-shadow:0 10px 26px #e6332944}
 .hb-dark{background:#1e2637;color:#fff;border-color:#2c3854}
 .hb-dark:hover{border-color:#43506f}
-.hb-ghost{background:transparent;color:#fff;border-color:#33405c}
-.hb-ghost:hover{border-color:#5568}
+.hb-ghost{background:transparent;color:#e8edf7;border-color:#4a5e80}
+.hb-ghost:hover{border-color:#7a94bb;color:#fff}
 .hb-lg{padding:15px 28px;font-size:16px}
 
 /* ---------------- Top navigation ---------------- */
-.hov-nav{position:sticky;top:0;z-index:40;background:var(--ink);border-bottom:1px solid #1a2336;width:100%;overflow-x:clip}
+.hov-nav{position:sticky;top:0;z-index:40;background:#131c2e;border-bottom:1px solid #1e2d47;width:100%;overflow-x:clip}
 .hov-nav-in{display:flex;align-items:center;gap:14px;padding:12px 24px;max-width:1440px;margin:0 auto;width:100%}
 .hov-links{display:flex;gap:14px;margin-left:18px;align-items:center;flex-wrap:wrap}
-.hov-links a{color:#cfd6e4;font-weight:600;font-size:13.5px;white-space:nowrap;transition:color .15s}
-.hov-links a:hover,.hov-links a.on{color:#fff}
+.hov-links a{color:#9aa9c4;font-weight:600;font-size:13.5px;white-space:nowrap;transition:color .15s,border-color .15s;padding-bottom:3px;border-bottom:2px solid transparent}
+.hov-links a:hover{color:#fff;border-bottom-color:transparent}
+.hov-links a.on{color:#fff;border-bottom-color:#38bdf8}
 .hov-nav-cta{margin-left:auto;display:flex;gap:10px;align-items:center;flex-shrink:0}
 .hov-burger{margin-left:auto;display:none;background:none;border:0;flex-direction:column;gap:5px;padding:8px;cursor:pointer;list-style:none}
 .hov-burger::-webkit-details-marker{display:none}
 .hov-burger span{width:24px;height:2.5px;background:#fff;border-radius:2px}
 .hov-mobile{margin-left:auto;display:none}
 .hov-mobile[open]{position:static}
-.hov-mobile-panel{position:absolute;left:0;right:0;top:100%;background:var(--ink);border-bottom:1px solid #1a2336;padding:16px 28px;display:flex;flex-direction:column;gap:14px}
+.hov-mobile-panel{position:absolute;left:0;right:0;top:100%;background:#131c2e;border-bottom:1px solid #1e2d47;padding:16px 28px;display:flex;flex-direction:column;gap:14px}
 .hov-mobile-panel a{color:#cfd6e4;font-weight:600}
 
 @media(max-width:1200px){
