@@ -36,8 +36,8 @@ export default function CommunityPage() {
             ))}
           </div>
           <div className="sh-card" style={{ textAlign: 'center', marginTop: 24 }}>
-            <h3 style={{ color: '#fff', fontSize: 20, margin: '0 0 8px' }}>Ready to add your voice?</h3>
-            <p style={{ color: '#aab4c8', marginBottom: 16 }}>Your story could be the one that helps someone else.</p>
+            <h3 style={{ color: '#172632', fontSize: 20, margin: '0 0 8px' }}>Ready to add your voice?</h3>
+            <p style={{ color: '#56636a', marginBottom: 16 }}>Your story could be the one that helps someone else.</p>
             <Link href="/share" className="hb hb-red hb-lg">Share your story</Link>{' '}
             <Link href="/stories" className="hb hb-dark hb-lg">Browse stories</Link>
           </div>

@@ -32,9 +32,9 @@ export default async function StatePage({ params }: { params: { state: string } 
     <HovShell active="states">
       <div className="hov-page">
         <div className="hov-wrap">
-          <Link href="/states" style={{ color: '#8b96ab', fontWeight: 600 }}>← All states</Link>
+          <Link href="/states" style={{ color: '#56636a', fontWeight: 600 }}>← All states</Link>
           <div className="st-hero" style={{ marginTop: 12 }}>
-            <p className="pg-eyebrow" style={{ color: '#7fb0e8' }}>YOUR STATE</p>
+            <p className="pg-eyebrow" style={{ color: '#0d6b68' }}>YOUR STATE</p>
             <h1>What’s happening in {name}?</h1>
             <p>Bills, civic news, and transparency red flags for {name} — from the public record.</p>
           </div>
@@ -44,10 +44,10 @@ export default async function StatePage({ params }: { params: { state: string } 
               <h3>🚩 {flagTotal} red flag{flagTotal === 1 ? '' : 's'} in the record</h3>
               <p className="rf-sub">Each maps to a documented “no” or an unrecorded vote — not opinion. <Link href="/red-flags">What do these mean?</Link></p>
               {billFlags.map((b) => (
-                <div key={b.id} className="rf-item"><b>🚩 {b.identifier} — {b.redFlags.join(', ')}</b><span><Link href={`/bills/${b.id}`} style={{ color: '#ffb3ab' }}>{b.title.slice(0, 90)}</Link></span></div>
+                <div key={b.id} className="rf-item"><b>🚩 {b.identifier} — {b.redFlags.join(', ')}</b><span><Link href={`/bills/${b.id}`} style={{ color: '#0d6b68' }}>{b.title.slice(0, 90)}</Link></span></div>
               ))}
               {newsFlags.map(({ n, flags }) => (
-                <div key={n.id} className="rf-item"><b>🚩 {flags.map((f) => f.title).join(', ')}</b><span><Link href={`/news/${n.id}`} style={{ color: '#ffb3ab' }}>{n.title.slice(0, 90)}</Link></span></div>
+                <div key={n.id} className="rf-item"><b>🚩 {flags.map((f) => f.title).join(', ')}</b><span><Link href={`/news/${n.id}`} style={{ color: '#0d6b68' }}>{n.title.slice(0, 90)}</Link></span></div>
               ))}
             </div>
           )}
@@ -63,7 +63,7 @@ export default async function StatePage({ params }: { params: { state: string } 
               bills.map((b) => (
                 <Link key={b.id} href={`/bills/${b.id}`} className="bl-card">
                   <div className="bl-meta">{b.session}{b.classification[0] ? ` · ${b.classification[0]}` : ''}</div>
-                  <h3 style={{ font: "800 16px/1.35 'Inter'", color: '#fff', margin: '2px 0 0' }}><span className="bl-id">{b.identifier}</span> {b.title}</h3>
+                  <h3 style={{ font: "800 16px/1.35 'Inter'", color: '#172632', margin: '2px 0 0' }}><span className="bl-id">{b.identifier}</span> {b.title}</h3>
                   {b.latestActionDescription && <p className="bl-action">Latest: {b.latestActionDescription}</p>}
                   {b.redFlags.length > 0 && <div className="bl-flags">{b.redFlags.map((f) => <span key={f}>🚩 {f}</span>)}</div>}
                 </Link>
@@ -82,7 +82,7 @@ export default async function StatePage({ params }: { params: { state: string } 
               news.map((n) => (
                 <Link key={n.id} href={`/news/${n.id}`} className="bl-card">
                   <div className="bl-meta"><span style={{ color: SCOPE_META[n.scope as CivicScope].color }}>{SCOPE_META[n.scope as CivicScope].text}</span> · {n.actorType}{n.jurisdiction ? ` · ${n.jurisdiction}` : ''}</div>
-                  <h3 style={{ font: "800 16px/1.35 'Inter'", color: '#fff', margin: '2px 0 6px' }}>{n.title}</h3>
+                  <h3 style={{ font: "800 16px/1.35 'Inter'", color: '#172632', margin: '2px 0 6px' }}>{n.title}</h3>
                   <p className="bl-action" style={{ margin: 0 }}>{n.judgment.total > 0 ? `${n.judgment.badPct}% Bad · ${n.judgment.goodPct}% Good · ${n.judgment.total} votes` : 'No votes yet'}</p>
                 </Link>
               ))

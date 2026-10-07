@@ -42,7 +42,7 @@ export default async function CasePage({ params }: { params: { id: string } }) {
     <HovShell active="vault">
       <div className="hov-page">
         <div className="hov-wrap" style={{ maxWidth: 760 }}>
-          <Link href="/vault" style={{ color: '#8b96ab', fontWeight: 600 }}>← The Justice Vault</Link>
+          <Link href="/vault" style={{ color: '#56636a', fontWeight: 600 }}>← The Justice Vault</Link>
 
           {pending && (
             <div className="jv-flag" style={{ marginTop: 12 }}>
@@ -53,7 +53,7 @@ export default async function CasePage({ params }: { params: { id: string } }) {
 
           <div style={{ marginTop: 14 }}>
             {c.spotlightLevel >= 2 && <span className="jv-spot" style={{ position: 'static', display: 'inline-block', marginBottom: 8 }}>{c.spotlightLevel >= 3 ? '★ Never forget' : 'Spotlight'}</span>}
-            <h1 style={{ font: "900 32px 'Inter'", color: '#fff', margin: '4px 0 4px' }}>{c.victimName}{c.victimAge ? `, ${c.victimAge}` : ''}</h1>
+            <h1 style={{ font: "900 32px 'Inter'", color: '#172632', margin: '4px 0 4px' }}>{c.victimName}{c.victimAge ? `, ${c.victimAge}` : ''}</h1>
             <div className="jv-meta">{c.caseType}{c.location ? ` · ${c.location}` : ''}{c.dateOfIncident ? ` · ${new Date(c.dateOfIncident).toLocaleDateString('en-US')}` : ''} · <span style={{ color: CASE_STATUS_META[c.status as CaseStatus].color }}>{CASE_STATUS_META[c.status as CaseStatus].text}</span></div>
           </div>
 

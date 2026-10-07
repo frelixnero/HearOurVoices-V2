@@ -31,9 +31,9 @@ export default async function BillDetail({ params }: { params: { id: string } })
     <HovShell active="bills">
       <div className="hov-page">
         <div className="hov-wrap" style={{ maxWidth: 760 }}>
-          <Link href="/bills" style={{ color: '#8b96ab', fontWeight: 600 }}>← All bills</Link>
+          <Link href="/bills" style={{ color: '#56636a', fontWeight: 600 }}>← All bills</Link>
           <div className="bl-meta" style={{ marginTop: 14 }}>{b.jurisdiction} · {b.session}{b.classification[0] ? ` · ${b.classification[0]}` : ''}</div>
-          <h1 style={{ font: "900 28px/1.2 'Inter'", color: '#fff', margin: '4px 0 6px' }}><span className="bl-id">{b.identifier}</span> {b.title}</h1>
+          <h1 style={{ font: "900 28px/1.2 'Inter'", color: '#172632', margin: '4px 0 6px' }}><span className="bl-id">{b.identifier}</span> {b.title}</h1>
           {b.latestActionDescription && <p className="bl-action">Latest action: {b.latestActionDescription}{b.latestActionDate ? ` (${b.latestActionDate})` : ''}</p>}
 
           {b.redFlags.length > 0 && (
@@ -64,7 +64,7 @@ export default async function BillDetail({ params }: { params: { id: string } })
                   <div className="bl-tally">
                     <span className="y">Yes {v.yes}</span><span className="n">No {v.no}</span><span className="o">Other {v.other}</span>
                     {v.yes === 0 && v.no === 0 && <span className="bl-voice">🚩 no recorded tally</span>}
-                    {v.date && <span style={{ color: '#8b96ab' }}>· {v.date}</span>}
+                    {v.date && <span style={{ color: '#56636a' }}>· {v.date}</span>}
                   </div>
                 </div>
               ))}
@@ -100,7 +100,7 @@ export default async function BillDetail({ params }: { params: { id: string } })
 
           {b.sourceUrl && (
             <p style={{ marginTop: 14 }}>
-              <a href={b.sourceUrl} target="_blank" rel="noreferrer" style={{ color: '#7fb0e8', fontWeight: 700 }}>View full record on {b.source === 'legiscan' ? 'LegiScan' : 'OpenStates'} ↗</a>
+              <a href={b.sourceUrl} target="_blank" rel="noreferrer" style={{ color: '#0d6b68', fontWeight: 700 }}>View full record on {b.source === 'legiscan' ? 'LegiScan' : 'OpenStates'} ↗</a>
             </p>
           )}
           <p className="nw-disc">Verified public-record data cached from {b.source === 'legiscan' ? 'LegiScan' : 'OpenStates'}. Always confirm on the official source before relying on it.</p>

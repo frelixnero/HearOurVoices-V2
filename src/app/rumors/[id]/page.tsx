@@ -36,11 +36,11 @@ export default async function RumorPage({ params }: { params: { id: string } }) 
     <HovShell active="rumors">
       <div className="hov-page">
         <div className="hov-wrap" style={{ maxWidth: 720 }}>
-          <Link href="/rumors" style={{ color: '#8b96ab', fontWeight: 600 }}>← All rumors</Link>
+          <Link href="/rumors" style={{ color: '#56636a', fontWeight: 600 }}>← All rumors</Link>
 
           <div className="rm-card" style={{ marginTop: 14 }}>
             <div className="who"><span className="av"><User size={15} /></span>{rumor.displayName} · {timeAgo(rumor.createdAt)}{rumor.topic ? ` · ${rumor.topic}` : ''}</div>
-            <p className="rm-text" style={{ fontSize: 20 }}>“{rumor.text}”</p>
+            <p className="rm-text" style={{ fontSize: 20, color: '#172632' }}>“{rumor.text}”</p>
           </div>
 
           {rumor.grading.source === 'reviewer' && rumor.officialRationale && (
@@ -49,11 +49,11 @@ export default async function RumorPage({ params }: { params: { id: string } }) 
 
           <RumorActions rumorId={rumor.id} initialGrading={rumor.grading} initialVote={rumor.myVote} />
 
-          <h2 style={{ color: '#fff', fontSize: 20, margin: '26px 0 14px' }}>
+          <h2 style={{ color: '#172632', fontSize: 20, margin: '26px 0 14px' }}>
             Evidence ({rumor.evidence.length})
           </h2>
           {rumor.evidence.length === 0 ? (
-            <p style={{ color: '#8b96ab' }}>No evidence yet. Add what you know above.</p>
+            <p style={{ color: '#56636a' }}>No evidence yet. Add what you know above.</p>
           ) : (
             rumor.evidence.map((e) => (
               <div key={e.id} className="rm-ev">

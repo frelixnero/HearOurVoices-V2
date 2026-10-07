@@ -38,14 +38,14 @@ export default async function ReportPage({ params }: { params: { id: string } })
     <HovShell active="reports">
       <div className="hov-page">
         <div className="hov-wrap" style={{ maxWidth: 740 }}>
-          <Link href={`/reports?lane=${r.lane.toLowerCase()}`} style={{ color: '#8b96ab', fontWeight: 600 }}>← All reports</Link>
+          <Link href={`/reports?lane=${r.lane.toLowerCase()}`} style={{ color: '#56636a', fontWeight: 600 }}>← All reports</Link>
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '16px 0 8px' }}>
             <LabelBadge label={r.label} />
             <StatusBadge status={r.claimStatus} />
           </div>
-          <h1 style={{ font: "900 30px/1.18 'Inter'", color: '#fff', margin: '4px 0 8px' }}>{r.title}</h1>
-          <div className="rp-byline">By <b style={{ color: '#cfd6e4' }}>{r.displayName}</b> · {timeAgo(r.createdAt)} · {isJ ? 'Civic journalist' : 'Citizen report'}</div>
+          <h1 style={{ font: "900 30px/1.18 'Inter'", color: '#172632', margin: '4px 0 8px' }}>{r.title}</h1>
+          <div className="rp-byline">By <b style={{ color: '#172632' }}>{r.displayName}</b> · {timeAgo(r.createdAt)} · {isJ ? 'Civic journalist' : 'Citizen report'}</div>
 
           <div className="rp-note"><b>Claim status — {statusMeta.text}.</b> {statusMeta.note} Unresolved claims are not graded true or false.</div>
 
@@ -76,7 +76,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
 
           {r.corrections.length > 0 && (
             <>
-              <h2 style={{ color: '#fff', fontSize: 18, margin: '24px 0 10px' }}>Corrections</h2>
+              <h2 style={{ color: '#172632', fontSize: 18, margin: '24px 0 10px' }}>Corrections</h2>
               {r.corrections.map((c) => (
                 <div key={c.id} className="rp-note" style={{ borderLeftColor: '#d9a334' }}>
                   {c.voluntary ? 'Voluntary correction' : 'Correction'} · {timeAgo(c.createdAt)}: {c.note}
@@ -87,7 +87,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
 
           {r.statusEvents.length > 0 && (
             <>
-              <h2 style={{ color: '#fff', fontSize: 18, margin: '24px 0 10px' }}>Status history</h2>
+              <h2 style={{ color: '#172632', fontSize: 18, margin: '24px 0 10px' }}>Status history</h2>
               {r.statusEvents.map((e) => (
                 <div key={e.id} className="rp-ev">
                   <span className="st sup">{STATUS_META[e.fromStatus as ClaimStatus]?.text} → {STATUS_META[e.toStatus as ClaimStatus]?.text}</span>

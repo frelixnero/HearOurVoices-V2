@@ -30,12 +30,12 @@ export default async function NewsDetail({ params }: { params: { id: string } })
     <HovShell active="news">
       <div className="hov-page">
         <div className="hov-wrap" style={{ maxWidth: 760 }}>
-          <Link href="/news" style={{ color: '#8b96ab', fontWeight: 600 }}>← All civic news</Link>
+          <Link href="/news" style={{ color: '#56636a', fontWeight: 600 }}>← All civic news</Link>
           <div className="nw-top" style={{ marginTop: 14 }}>
             <span className="nw-scope" style={{ background: SCOPE_META[n.scope as CivicScope].color }}>{SCOPE_META[n.scope as CivicScope].text}</span>
             <span className="nw-actor">{n.actorType}{n.actorName ? ` — ${n.actorName}` : ''}{n.jurisdiction ? ` · ${n.jurisdiction}` : ''}</span>
           </div>
-          <h1 style={{ font: "900 30px/1.18 'Inter'", color: '#fff', margin: '4px 0 10px' }}>{n.title}</h1>
+          <h1 style={{ font: "900 30px/1.18 'Inter'", color: '#172632', margin: '4px 0 10px' }}>{n.title}</h1>
 
           {mod && (
             <div className="nw-module">
@@ -119,13 +119,13 @@ export default async function NewsDetail({ params }: { params: { id: string } })
             ))}
           </div>
 
-          <h2 style={{ color: '#fff', fontSize: 20, margin: '24px 0 6px' }}>Public judgment</h2>
+          <h2 style={{ color: '#172632', fontSize: 20, margin: '24px 0 6px' }}>Public judgment</h2>
           <NewsVote newsId={n.id} initial={n.judgment} initialVerdict={n.myVote?.verdict} initialReason={n.myVote?.reason} />
 
           {n.topReasons.length > 0 && (
             <div className="nw-sec" style={{ marginTop: 18 }}>
               <h3>Top reasons people gave</h3>
-              <ul className="nw-toplist">{n.topReasons.map((r, i) => <li key={i}>&ldquo;{r.reason}&rdquo; <span style={{ color: '#8b96ab' }}>· {r.count}</span></li>)}</ul>
+              <ul className="nw-toplist">{n.topReasons.map((r, i) => <li key={i}>&ldquo;{r.reason}&rdquo; <span style={{ color: '#56636a' }}>· {r.count}</span></li>)}</ul>
             </div>
           )}
 
@@ -133,8 +133,8 @@ export default async function NewsDetail({ params }: { params: { id: string } })
             <div className="nw-sec">
               <h3>History — past actions involving {n.actorName ?? n.actorType}</h3>
               {n.history.map((h) => (
-                <Link key={h.id} href={`/news/${h.id}`} style={{ display: 'block', padding: '8px 0', borderBottom: '1px solid #26314a', color: '#cfd6e4' }}>
-                  {h.title} <span style={{ color: '#8b96ab', fontSize: 13 }}>· {h.judgment.total > 0 ? `${h.judgment.badPct}% Bad / ${h.judgment.goodPct}% Good` : 'no votes yet'}</span>
+                <Link key={h.id} href={`/news/${h.id}`} style={{ display: 'block', padding: '8px 0', borderBottom: '1px solid #d9ddd8', color: '#172632' }}>
+                  {h.title} <span style={{ color: '#56636a', fontSize: 13 }}>· {h.judgment.total > 0 ? `${h.judgment.badPct}% Bad / ${h.judgment.goodPct}% Good` : 'no votes yet'}</span>
                 </Link>
               ))}
             </div>

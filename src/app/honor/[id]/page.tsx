@@ -27,12 +27,12 @@ export default async function HeroPage({ params }: { params: { id: string } }) {
     <HovShell active="honor">
       <div className="hov-page">
         <div className="hov-wrap" style={{ maxWidth: 760 }}>
-          <Link href="/honor" style={{ color: '#8b96ab', fontWeight: 600 }}>← The Honor Vault</Link>
+          <Link href="/honor" style={{ color: '#56636a', fontWeight: 600 }}>← The Honor Vault</Link>
 
           <div style={{ marginTop: 14 }}>
             {h.spotlightLevel >= 2 && <span className="hn-spot" style={{ position: 'static', display: 'inline-block', marginBottom: 8 }}>{h.spotlightLevel >= 3 ? '★ Never forget' : 'Spotlight'}</span>}
             <span className="hn-cat" style={{ background: cat.color, marginLeft: h.spotlightLevel >= 2 ? 8 : 0 }}>{cat.text}</span>
-            <h1 style={{ font: "900 32px/1.15 'Inter'", color: '#fff', margin: '8px 0 4px' }}>{h.rank ? `${h.rank} ` : ''}{h.heroName}</h1>
+            <h1 style={{ font: "900 32px/1.15 'Inter'", color: '#172632', margin: '8px 0 4px' }}>{h.rank ? `${h.rank} ` : ''}{h.heroName}</h1>
             <div className="hn-meta">{[h.branch, h.conflictOrEra, h.homeState].filter(Boolean).join(' · ')}</div>
           </div>
 
@@ -66,7 +66,7 @@ export default async function HeroPage({ params }: { params: { id: string } }) {
           {keyDates.length > 0 && (
             <div className="hn-sec"><h3>Remembered on</h3>
               <div className="jv-words">{keyDates.map((k, i) => <span key={i}>{k.label}: {k.date}</span>)}</div>
-              <p style={{ fontSize: 13, color: '#8b96ab', margin: '8px 0 0' }}>Plus Memorial Day, Veterans Day, and Independence Day — when the Vault resurfaces every hero.</p>
+              <p style={{ fontSize: 13, color: '#56636a', margin: '8px 0 0' }}>Plus Memorial Day, Veterans Day, and Independence Day — when the Vault resurfaces every hero.</p>
             </div>
           )}
 

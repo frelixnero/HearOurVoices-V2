@@ -204,6 +204,12 @@
 .hov-page{background:var(--ink);min-height:60vh;padding:44px 0 70px}
 .hov-page .hov-wrap{max-width:900px}
 .hov-page h1{font-size:36px;font-weight:900;color:var(--text);letter-spacing:-.6px;margin:0 0 8px}
+.hov-page h2,.hov-page h3,.hov-page h4,.hov-page b,.hov-page strong{color:var(--text)}
+.hov-page p,.hov-page li,.hov-page span,.hov-page time,.hov-page .lead,.hov-page .rp-byline,.hov-page .rp-note,.hov-page .nw-disc,.hov-page .rf-sub,.hov-page .nw-modblurb,.hov-page .nw-next p,.hov-page .nw-actor{color:var(--muted)}
+.hov-page a{color:var(--teal)}
+.hov-page .back-link,.hov-page a[style*="color: #8b96ab"],.hov-page a[style*="color:#8b96ab"]{color:var(--muted)!important}
+.hov-page .nw-disc,.hov-page .rp-note,.hov-page .rp-neut{background:#f8f7f3;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.hov-page .nw-src a,.hov-page .rp-source,.hov-page .nw-card a,.hov-page .bl-card a,.hov-page .jv-card a{color:var(--teal)}
 .hov-page .lead{font-size:17px;color:var(--muted);margin:0 0 26px}
 .pg-eyebrow{font-size:12px;letter-spacing:1.6px;font-weight:800;color:var(--teal);margin:0 0 8px}
 

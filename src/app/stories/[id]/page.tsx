@@ -36,11 +36,11 @@ export default async function StoryPage({ params }: { params: { id: string } }) 
     <HovShell active="stories">
       <div className="hov-page">
         <div className="hov-wrap" style={{ maxWidth: 720 }}>
-          <Link href="/stories" style={{ color: '#8b96ab', fontWeight: 600 }}>← All stories</Link>
+          <Link href="/stories" style={{ color: '#56636a', fontWeight: 600 }}>← All stories</Link>
           <div className="st-card" style={{ marginTop: 14 }}>
             <div className="who"><span className="av"><User size={16} /></span>{story.displayName} · {timeAgo(story.createdAt)}</div>
-            {story.title && <h3 style={{ fontSize: 24 }}>{story.title}</h3>}
-            <p style={{ fontSize: 16, whiteSpace: 'pre-wrap' }}>{story.body}</p>
+            {story.title && <h3 style={{ fontSize: 24, color: '#172632' }}>{story.title}</h3>}
+            <p style={{ fontSize: 16, whiteSpace: 'pre-wrap', color: '#45535a' }}>{story.body}</p>
             {story.topics.length > 0 && (
               <div className="st-tags">
                 {story.topics.map((t) => <span key={t} className="st-tag">{t[0]?.toUpperCase()}{t.slice(1)}</span>)}
@@ -50,11 +50,11 @@ export default async function StoryPage({ params }: { params: { id: string } }) 
 
           <StoryActions storyId={story.id} initialCount={story.supportCount} />
 
-          <h2 style={{ color: '#fff', fontSize: 20, margin: '10px 0 14px' }}>
+          <h2 style={{ color: '#172632', fontSize: 20, margin: '10px 0 14px' }}>
             Support ({story.comments.length})
           </h2>
           {story.comments.length === 0 ? (
-            <p style={{ color: '#8b96ab' }}>No comments yet. Be the first to offer kindness.</p>
+            <p style={{ color: '#56636a' }}>No comments yet. Be the first to offer kindness.</p>
           ) : (
             <div className="st-feed">
               {story.comments.map((c) => (
