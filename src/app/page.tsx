@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import './marketing.css';
 import Link from 'next/link';
 import {
   SquarePen, Tag, Users, Megaphone, Eye, Globe, ShieldCheck, User, Lock,
