@@ -20,7 +20,7 @@ export function SiteHeader() {
 
         <div className="site-header-actions">
           <Link href="/community" className="btn btn-ghost">Sign in</Link>
-          <Link href="/community" className="btn btn-primary">Open the app</Link>
+          <Link href="/" className="btn btn-primary">Open the app</Link>
         </div>
 
         <details className="site-menu">
@@ -30,7 +30,7 @@ export function SiteHeader() {
             <Link href="/how-it-works">How it works</Link>
             <Link href="/methodology">How we check facts</Link>
             <Link href="/about">About</Link>
-            <Link href="/community" className="btn btn-primary">Open the app</Link>
+            <Link href="/" className="btn btn-primary">Open the app</Link>
           </div>
         </details>
       </div>

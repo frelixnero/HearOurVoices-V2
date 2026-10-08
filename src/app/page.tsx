@@ -8,6 +8,7 @@ import {
 import { HovLogo } from '@/components/HovLogo';
 import { NewsJudgment } from '@/components/NewsJudgment';
 import { PushOptIn } from '@/components/PushOptIn';
+import { SiteFooter } from '@/components/SiteFooter';
 import { rumorsEnabled } from '@/lib/flags';
 import { listNews } from '@/lib/civic/service';
 import { SCOPE_META, detectRedFlags, type CivicScope } from '@/lib/civic/labels';
@@ -266,46 +267,7 @@ export default async function Landing() {
         </div>
       </div>
 
-      {/* FOOTER */}
-      <div className="hov-foot">
-        <div className="hov-wrap hov-foot-in">
-          <div>
-            <HovLogo />
-            <p className="tag">Real stories. Real people.<br />Real change.</p>
-            <div className="socials">
-              <a href="#" aria-label="Facebook"><Facebook size={16} /></a>
-              <a href="#" aria-label="Twitter"><Twitter size={16} /></a>
-              <a href="#" aria-label="Instagram"><Instagram size={16} /></a>
-              <a href="#" aria-label="LinkedIn"><Linkedin size={16} /></a>
-              <a href="#" aria-label="YouTube"><Youtube size={16} /></a>
-            </div>
-          </div>
-          <div className="hov-fcol">
-            <h4>Platform</h4>
-            <Link href="/stories">Stories</Link><Link href="/topics">Topics</Link>
-            <Link href="/community">Community</Link><Link href="/resources">Resources</Link>
-          </div>
-          <div className="hov-fcol">
-            <h4>Support</h4>
-            <Link href="/help">Help Center</Link><Link href="/safety">Safety</Link>
-            <Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link>
-          </div>
-          <div className="hov-fcol">
-            <h4>Get Involved</h4>
-            <Link href="/volunteer">Volunteer</Link><Link href="/partner">Partner With Us</Link>
-            <Link href="/share">Share Our Mission</Link><Link href="/donate">Donate</Link>
-          </div>
-          <div className="hov-fcol">
-            <h4>Stay Connected</h4>
-            <span style={{ fontSize: 14, color: '#9aa6bd' }}>Join our newsletter for updates</span>
-            <form className="hov-news" action="/api/newsletter" method="post">
-              <input type="email" name="email" placeholder="Enter your email" aria-label="Email" required />
-              <button className="hb hb-red" type="submit">Subscribe</button>
-            </form>
-          </div>
-        </div>
-        <div className="hov-foot-bot">© {new Date().getFullYear()} hearOURvoices. All rights reserved.</div>
-      </div>
+      <SiteFooter />
     </div>
   );
 }
